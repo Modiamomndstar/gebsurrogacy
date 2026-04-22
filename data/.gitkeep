@@ -1,0 +1,2 @@
+# Application data directory
+# Database and other persistent data stored here when running in Docker

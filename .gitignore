@@ -1,0 +1,108 @@
+# Dependencies
+node_modules/
+npm-debug.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+.env.production.local
+
+# Build output
+dist/
+build/
+.next/
+out/
+
+# IDE/Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+*.sublime-project
+*.sublime-workspace
+
+# Database
+database.sqlite
+database.sqlite-shm
+database.sqlite-wal
+*.db
+*.sqlite
+
+# Logs
+logs/
+*.log
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# OS specific
+.DS_Store
+.env.example~
+*.bak
+
+# Package manager
+.Lock
+package-lock.json~
+yarn.lock~
+
+# Testing
+coverage/
+.nyc_output/
+.coverage/
+htmlcov/
+
+# Git
+.git/
+.gitignore~
+
+# Backups - but version control some
+!backups/.gitkeep
+backups/*.sqlite
+
+# Node heap snapshots
+heap-snapshots/
+*.heapsnapshot
+
+# PM2
+ecosystem.config.js~
+
+# Docker
+docker-compose.override.yml
+.dockerignore~
+
+# CI/CD
+.circleci/
+.travis.yml~
+
+# Misc
+.cache/
+.parcel-cache/
+dist/
+.turbo/
+
+# Deployment & Guide Files - DON'T PUSH TO GITHUB
+VIRTUALMIN_DEPLOYMENT_GUIDE.md
+LIVE_DEPLOYMENT_GUIDE.md
+TERMINAL_DEPLOYMENT_GUIDE.md
+INDEX.md
+QUICKSTART.md
+PRODUCTION_READY.md
+API_DOCUMENTATION.md
+ENV_CONFIG.md
+COMPLETION.md
+deploy.sh
+deploy.bat
+backup.sh
+health-check.sh
+ecosystem.config.js
+DEPLOYMENT.md

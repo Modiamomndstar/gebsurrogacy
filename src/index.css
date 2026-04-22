@@ -1,0 +1,224 @@
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 0 0% 18%;
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 18%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 18%;
+    --primary: 345 88% 81%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 345 100% 97%;
+    --secondary-foreground: 0 0% 18%;
+    --muted: 0 0% 97%;
+    --muted-foreground: 0 0% 40%;
+    --accent: 345 88% 81%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 345 30% 90%;
+    --input: 345 30% 90%;
+    --ring: 345 88% 81%;
+    --radius: 0.625rem;
+    
+    /* GEB Brand Colors */
+    --geb-pink: #f8a4b9;
+    --geb-pink-dark: #e88aa3;
+    --geb-pink-light: #ffeef2;
+    --geb-dark: #2d2d2d;
+    --geb-gray: #666666;
+    --geb-light-gray: #f8f8f8;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  
+  html {
+    scroll-behavior: smooth;
+  }
+  
+  body {
+    @apply bg-white text-foreground font-sans antialiased;
+    font-family: 'Inter', sans-serif;
+  }
+  
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Playfair Display', serif;
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+  
+  .geb-gradient {
+    background: linear-gradient(135deg, var(--geb-pink-light) 0%, var(--geb-pink) 100%);
+  }
+  
+  .geb-text-gradient {
+    background: linear-gradient(135deg, var(--geb-pink-dark) 0%, var(--geb-pink) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--geb-pink-light);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--geb-pink);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--geb-pink-dark);
+}
+
+/* Animation keyframes */
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-20px);
+  }
+}
+
+@keyframes pulse-soft {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.02);
+    opacity: 0.9;
+  }
+}
+
+@keyframes rotate-slow {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes scale-in {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.animate-float {
+  animation: float 6s ease-in-out infinite;
+}
+
+.animate-pulse-soft {
+  animation: pulse-soft 4s ease-in-out infinite;
+}
+
+.animate-rotate-slow {
+  animation: rotate-slow 60s linear infinite;
+}
+
+.animate-slide-up {
+  animation: slide-up 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-fade-in {
+  animation: fade-in 0.6s ease-out forwards;
+}
+
+.animate-scale-in {
+  animation: scale-in 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Glass effect */
+.glass {
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+/* Hover lift effect */
+.hover-lift {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.hover-lift:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 20px 40px rgba(248, 164, 185, 0.2);
+}
+
+/* Button styles */
+.btn-primary {
+  @apply px-8 py-4 bg-[#f8a4b9] text-white font-semibold rounded-full transition-all duration-300;
+}
+
+.btn-primary:hover {
+  @apply bg-[#e88aa3] shadow-lg;
+  transform: translateY(-2px);
+  box-shadow: 0 10px 30px rgba(248, 164, 185, 0.4);
+}
+
+.btn-secondary {
+  @apply px-8 py-4 bg-white text-[#f8a4b9] font-semibold rounded-full border-2 border-[#f8a4b9] transition-all duration-300;
+}
+
+.btn-secondary:hover {
+  @apply bg-[#ffeef2];
+  transform: translateY(-2px);
+}
+
+/* Section padding */
+.section-padding {
+  @apply px-4 sm:px-6 lg:px-8 xl:px-16 2xl:px-24;
+}
+
+/* Container */
+.container-custom {
+  @apply max-w-7xl mx-auto;
+}

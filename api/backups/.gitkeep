@@ -1,0 +1,3 @@
+# Database backups directory
+# Backups created by db-manager.js are stored here
+# Format: backup-YYYY-MM-DDTHH-mm-ss-SSS.sqlite

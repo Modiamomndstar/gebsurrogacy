@@ -45,7 +45,7 @@ A modern, production-ready website for GEB Surrogacy Services with secure backen
 ## 📁 Project Structure
 
 ```
-app/
+gebsurrogacy/
 ├── src/                          # Frontend source code
 │   ├── App.tsx                   # Main application component
 │   ├── main.tsx                  # React entry point

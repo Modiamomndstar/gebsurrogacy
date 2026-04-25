@@ -333,7 +333,7 @@ const authorizeRoles = (allowedRoles) => (req, res, next) => {
 };
 
 // Authentication middleware
-const authenticateAdmin = (req, res, next) => {
+const authenticateAdmin = async (req, res, next) => {
   const authHeader = req.headers["authorization"];
   const token = authHeader?.split(" ")[1];
 

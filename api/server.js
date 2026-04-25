@@ -173,10 +173,15 @@ const authenticateAdmin = async (req, res, next) => {
 
 // --- AUTH ENDPOINTS ---
 
-app.post("/api/admin/login", async (req, res) => {
+app.post("/api/auth/login", async (req, res) => {
   try {
-    const { username, password } = req.body;
-    const user = await db.users.findOne({ username, active: 1 });
+    const { username, email, password } = req.body;
+    const identifier = username || email;
+    
+    const user = await db.users.findOne({ 
+      $or: [{ username: identifier }, { email: identifier }],
+      active: 1 
+    });
     
     if (!user || !verifyPassword(password, user.password_hash)) {
       return res.status(401).json({ error: "Invalid credentials" });
@@ -195,6 +200,11 @@ app.post("/api/admin/login", async (req, res) => {
     logger.error("Login error", error);
     res.status(500).json({ error: "Internal server error" });
   }
+});
+
+// Alias for older admin routes
+app.post("/api/admin/login", (req, res) => {
+  return res.redirect(307, "/api/auth/login");
 });
 
 // Admin stats

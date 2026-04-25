@@ -214,8 +214,9 @@ app.post("/api/auth/login", async (req, res) => {
     
     logger.info(`Login successful for ${identifier}. Sending response...`);
 
-    // Flatten the response and provide explicit fallbacks to ensure no fields are missing
+    // The frontend expects a "success" field to be true!
     const responseData = {
+      success: true,
       token,
       user: {
         id: user._id,

@@ -182,14 +182,26 @@ const authenticateAdmin = async (req, res, next) => {
 app.post("/api/auth/login", async (req, res) => {
   try {
     const { username, email, password } = req.body;
-    const identifier = username || email;
+    const identifier = (email || username || "").trim().toLowerCase();
     
+    logger.info(`Login attempt for: ${identifier}`);
+
     const user = await db.users.findOne({ 
-      $or: [{ username: identifier }, { email: identifier }],
+      $or: [
+        { email: identifier },
+        { username: identifier },
+        { email: identifier.toLowerCase() }
+      ],
       active: 1 
     });
     
-    if (!user || !verifyPassword(password, user.password_hash)) {
+    if (!user) {
+      logger.warn(`Login failed: User not found for ${identifier}`);
+      return res.status(401).json({ error: "Invalid credentials" });
+    }
+
+    if (!verifyPassword(password, user.password_hash)) {
+      logger.warn(`Login failed: Password mismatch for ${identifier}`);
       return res.status(401).json({ error: "Invalid credentials" });
     }
 
@@ -198,9 +210,16 @@ app.post("/api/auth/login", async (req, res) => {
     
     await db.users.update({ _id: user._id }, { $set: { token_hash: tokenHash } });
     
+    logger.info(`Login successful: ${identifier}`);
+
     res.json({
       token,
-      user: { id: user._id, username: user.username, role: user.role },
+      user: { 
+        id: user._id, 
+        username: user.username, 
+        email: user.email,
+        role: user.role 
+      },
     });
   } catch (error) {
     logger.error("Login error", error);

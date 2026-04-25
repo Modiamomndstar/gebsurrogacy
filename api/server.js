@@ -88,18 +88,23 @@ const db = {
 // Initialize Database
 const initializeDatabase = async () => {
   try {
-    // Ensure default admin
-    const adminCount = await db.users.count({ role: "superadmin" });
-    if (adminCount === 0) {
-      await db.users.insert({
-        username: ADMIN_USERNAME,
-        email: "admin@gebsurrogacy.com",
-        password_hash: hashPassword("Admin@1234"),
-        role: "superadmin",
-        active: 1,
-      });
-      logger.info("Default admin user created");
-    }
+    const defaultEmail = process.env.ADMIN_EMAIL || "admin@gebsurrogacy.com";
+    const defaultPass = process.env.ADMIN_PASSWORD || "Admin@1234";
+
+    // Sync superadmin from .env on every start
+    await db.users.update(
+      { role: "superadmin" },
+      { 
+        $set: { 
+          email: defaultEmail, 
+          username: ADMIN_USERNAME, 
+          password_hash: hashPassword(defaultPass),
+          active: 1 
+        } 
+      },
+      { upsert: true }
+    );
+    logger.info("Superadmin credentials synchronized");
 
     // Ensure default services
     const servicesCount = await db.services.count({});

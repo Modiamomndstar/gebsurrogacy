@@ -212,17 +212,21 @@ app.post("/api/auth/login", async (req, res) => {
     
     await db.users.update({ _id: user._id }, { $set: { token_hash: tokenHash } });
     
-    logger.info(`Login successful: ${identifier}`);
+    logger.info(`Login successful for ${identifier}. Sending response...`);
 
-    res.json({
+    // Flatten the response and provide explicit fallbacks to ensure no fields are missing
+    const responseData = {
       token,
-      user: { 
-        id: user._id, 
-        username: user.username, 
-        email: user.email,
-        role: user.role 
-      },
-    });
+      user: {
+        id: user._id,
+        _id: user._id,
+        username: user.username || "superadmin",
+        email: user.email || identifier,
+        role: user.role || "superadmin"
+      }
+    };
+
+    res.json(responseData);
   } catch (error) {
     logger.error("Login error", error);
     res.status(500).json({ error: "Internal server error" });

@@ -195,6 +195,13 @@ app.post("/api/auth/login", async (req, res) => {
       return res.status(401).json({ error: "Invalid credentials" });
     }
 
+    logger.info(`Found user record for ${identifier}:`, { 
+      id: user._id, 
+      username: user.username, 
+      email: user.email, 
+      role: user.role 
+    });
+
     if (!verifyPassword(password, user.password_hash)) {
       logger.warn(`Login failed: Password mismatch for ${identifier}`);
       return res.status(401).json({ error: "Invalid credentials" });

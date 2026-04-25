@@ -254,9 +254,13 @@ function ensureDefaultSettings(callback) {
     { key: "company_name", value: "GEB Surrogacy Services", desc: "Official company name" },
     { key: "contact_email", value: "gebheritagagency@gmail.com", desc: "Public contact email" },
     { key: "contact_phone", value: "+234 703 427 0722", desc: "Public contact phone" },
-    { key: "contact_address", value: "Satellite Town, Lagos, Nigeria", desc: "Physical address" },
-    { key: "consultation_fee", value: "$100", desc: "Fee for consultations" },
     { key: "whatsapp_number", value: "+2347034270722", desc: "WhatsApp contact number" },
+    { key: "consultation_fee", value: "$100", desc: "Fee for consultations" },
+    { key: "address_nigeria", value: "Block D5 Flat 36 CBN Estate 2, Satellite Town Lagos Nigeria", desc: "Nigeria Office Address" },
+    { key: "address_uk", value: "Leeds, UK", desc: "UK Presence Address" },
+    { key: "address_usa", value: "California, USA", desc: "USA Presence Address" },
+    { key: "uk_phone", value: "+44 7933 193271", desc: "UK Phone Number" },
+    { key: "usa_phone", value: "+1 310 218 8513", desc: "USA Phone Number" },
     { key: "ai_provider", value: "gemini", desc: "AI provider (gemini or openai)" },
     { key: "ai_api_key", value: "", desc: "API key for the AI provider" },
     { key: "ai_topics", value: "Gestational Surrogacy, IVF Journey, Pregnancy Tips, Parenthood in UK/Nigeria", desc: "Topics for AI to focus on" },
@@ -798,6 +802,13 @@ app.get("/api/testimonies", (req, res) => {
   });
 });
 
+app.get("/api/admin/testimonies", authenticateAdmin, (req, res) => {
+  db.all("SELECT * FROM testimonies ORDER BY created_at DESC", [], (err, rows) => {
+    if (err) return res.status(500).json({ error: "Failed to fetch all testimonies" });
+    res.json({ testimonies: rows });
+  });
+});
+
 // Create testimony (admin)
 app.post("/api/testimonies", authenticateAdmin, (req, res) => {
   const { name, location, quote } = req.body;
@@ -841,6 +852,17 @@ app.get("/api/services", (req, res) => {
   db.all("SELECT * FROM services WHERE active = 1 ORDER BY id ASC", [], (err, rows) => {
     if (err) return res.status(500).json({ error: "Failed to fetch services" });
     // Parse features JSON
+    const services = rows.map(r => ({
+      ...r,
+      features: JSON.parse(r.features || "[]")
+    }));
+    res.json({ services });
+  });
+});
+
+app.get("/api/admin/services", authenticateAdmin, (req, res) => {
+  db.all("SELECT * FROM services ORDER BY id ASC", [], (err, rows) => {
+    if (err) return res.status(500).json({ error: "Failed to fetch all services" });
     const services = rows.map(r => ({
       ...r,
       features: JSON.parse(r.features || "[]")
@@ -1372,7 +1394,10 @@ app.get("/api/admin/summary", authenticateAdmin, (req, res) => {
             result.visitors = err3 ? 0 : row3.total;
             db.get("SELECT COUNT(*) AS total FROM blog_posts", [], (err4, row4) => {
               result.blogPosts = err4 ? 0 : row4.total;
-              res.json(result);
+              db.get("SELECT COUNT(*) AS total FROM testimonies", [], (err5, row5) => {
+                result.testimonials = err5 ? 0 : row5.total;
+                res.json(result);
+              });
             });
           });
         });
@@ -1418,6 +1443,14 @@ app.post("/api/admin/users", authenticateAdmin, authorizeRoles(["superadmin"]), 
     logger.error("Create admin user error", error);
     res.status(500).json({ error: "Internal server error" });
   }
+app.delete("/api/admin/users/:id", authenticateAdmin, authorizeRoles(["superadmin"]), (req, res) => {
+  const id = req.params.id;
+  if (id == 1) return res.status(403).json({ error: "Cannot delete the primary admin" });
+  
+  db.run("DELETE FROM admin_users WHERE id = ?", [id], function(err) {
+    if (err) return res.status(500).json({ error: "Failed to delete user" });
+    res.json({ success: true });
+  });
 });
 
 // Track visitor

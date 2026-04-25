@@ -144,7 +144,10 @@ function Home() {
   }, [])
 
   const [isScrolled, setIsScrolled] = useState(false)
-  const [activeService, setActiveService] = useState(0)
+  const [isMenuOpen, setIsMenuOpen] = useState(false)
+  const [isConsultDialogOpen, setIsConsultDialogOpen] = useState(false)
+  const [siteSettings, setSiteSettings] = useState<any>({})
+  
   const heroRef = useRef<HTMLDivElement>(null)
   const aboutRef = useRef<HTMLDivElement>(null)
   const servicesRef = useRef<HTMLDivElement>(null)
@@ -153,14 +156,24 @@ function Home() {
   const blogRef = useRef<HTMLDivElement>(null)
   const ctaRef = useRef<HTMLDivElement>(null)
 
-  // Handle scroll for navbar
   useEffect(() => {
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 100)
-    }
-    window.addEventListener('scroll', handleScroll, { passive: true })
+    const handleScroll = () => setIsScrolled(window.scrollY > 20)
+    window.addEventListener('scroll', handleScroll)
+    fetchSettings()
     return () => window.removeEventListener('scroll', handleScroll)
   }, [])
+
+  const fetchSettings = async () => {
+    try {
+      const response = await fetch('/api/settings')
+      const data = await response.json()
+      if (data.settings) {
+        setSiteSettings(data.settings)
+      }
+    } catch (error) {
+      console.error('Failed to fetch settings:', error)
+    }
+  }
 
   // GSAP animations
   useEffect(() => {
@@ -262,27 +275,27 @@ function Home() {
         {JSON.stringify({
           "@context": "https://schema.org",
           "@type": "Organization",
-          "name": "GEB Surrogacy Services",
+          "name": siteSettings.company_name || "GEB Surrogacy Services",
           "url": "https://gebsurrogacyservices.com",
           "logo": "https://gebsurrogacyservices.com/logo.png",
           "contactPoint": [
             {
               "@type": "ContactPoint",
-              "telephone": "+2347034270722",
+              "telephone": siteSettings.contact_phone || "+2347034270722",
               "contactType": "customer service",
               "areaServed": "NG",
               "availableLanguage": "en"
             },
             {
               "@type": "ContactPoint",
-              "telephone": "+447933193271",
+              "telephone": siteSettings.uk_phone || "+447933193271",
               "contactType": "UK Support",
               "areaServed": "GB",
               "availableLanguage": "en"
             },
             {
               "@type": "ContactPoint",
-              "telephone": "+13102188513",
+              "telephone": siteSettings.usa_phone || "+13102188513",
               "contactType": "USA Support",
               "areaServed": "US",
               "availableLanguage": "en"
@@ -879,7 +892,7 @@ function Home() {
                     <Instagram className="w-5 h-5" />
                   </a>
                   <a 
-                    href={`https://wa.me/${COMPANY_INFO.whatsapp.replace('+', '')}`}
+                    href={`https://wa.me/${(siteSettings.whatsapp_number || COMPANY_INFO.whatsapp).replace(/[^\d]/g, '')}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="w-10 h-10 bg-white/10 rounded-full flex items-center justify-center hover:bg-[#f8a4b9] transition-colors"
@@ -933,25 +946,25 @@ function Home() {
                     <div className="text-gray-400 text-sm">
                       <div className="mb-3">
                         <p className="font-bold text-white mb-1">Nigeria Office</p>
-                        <p>{COMPANY_INFO.nigeriaAddress}</p>
-                        <p className="text-xs mt-1 text-[#f8a4b9]">{COMPANY_INFO.phone}</p>
+                        <p>{siteSettings.address_nigeria || COMPANY_INFO.nigeriaAddress}</p>
+                        <p className="text-xs mt-1 text-[#f8a4b9]">{siteSettings.contact_phone || COMPANY_INFO.phone}</p>
                       </div>
                       <div className="mb-3">
                         <p className="font-bold text-white mb-1">UK Presence</p>
-                        <p>{COMPANY_INFO.ukAddress}</p>
-                        <p className="text-xs mt-1 text-[#f8a4b9]">{COMPANY_INFO.ukPhone}</p>
+                        <p>{siteSettings.address_uk || COMPANY_INFO.ukAddress}</p>
+                        <p className="text-xs mt-1 text-[#f8a4b9]">{siteSettings.uk_phone || COMPANY_INFO.ukPhone}</p>
                       </div>
                       <div>
                         <p className="font-bold text-white mb-1">USA Presence</p>
-                        <p>{COMPANY_INFO.usaAddress}</p>
-                        <p className="text-xs mt-1 text-[#f8a4b9]">{COMPANY_INFO.usaPhone}</p>
+                        <p>{siteSettings.address_usa || COMPANY_INFO.usaAddress}</p>
+                        <p className="text-xs mt-1 text-[#f8a4b9]">{siteSettings.usa_phone || COMPANY_INFO.usaPhone}</p>
                       </div>
                     </div>
                   </li>
                   <li className="flex items-center gap-3">
                     <Mail className="w-5 h-5 text-[#f8a4b9] flex-shrink-0" />
-                    <a href={`mailto:${COMPANY_INFO.email}`} className="text-gray-400 hover:text-[#f8a4b9] transition-colors text-sm">
-                      {COMPANY_INFO.email}
+                    <a href={`mailto:${siteSettings.contact_email || COMPANY_INFO.email}`} className="text-gray-400 hover:text-[#f8a4b9] transition-colors text-sm">
+                      {siteSettings.contact_email || COMPANY_INFO.email}
                     </a>
                   </li>
                 </ul>
@@ -993,9 +1006,12 @@ function Home() {
       <Dialog open={isConsultDialogOpen} onOpenChange={setIsConsultDialogOpen}>
         <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle className="font-serif text-2xl">Book a Free Consultation</DialogTitle>
+            <DialogTitle className="font-serif text-2xl">Book a Consultation</DialogTitle>
             <DialogDescription>
-              Fill out the form below and we'll get back to you within 24 hours.
+              Fill out the form below and we'll get back to you within 24 hours. 
+              {siteSettings.consultation_fee && (
+                <span className="block mt-2 font-medium text-[#f8a4b9]">Consultation Fee: {siteSettings.consultation_fee}</span>
+              )}
             </DialogDescription>
           </DialogHeader>
           <form onSubmit={handleConsultSubmit} className="space-y-4 mt-4">

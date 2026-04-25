@@ -87,15 +87,18 @@ export default function AdminDashboard() {
   const [services, setServices] = useState<any[]>([])
   const [siteSettings, setSiteSettings] = useState<any>({})
   const [aiLogs, setAiLogs] = useState<any[]>([])
+  const [adminUsers, setAdminUsers] = useState<any[]>([])
   const [isGenerating, setIsGenerating] = useState(false)
   
   const [isBlogModalOpen, setIsBlogModalOpen] = useState(false)
   const [isTestimonyModalOpen, setIsTestimonyModalOpen] = useState(false)
   const [isServiceModalOpen, setIsServiceModalOpen] = useState(false)
+  const [isUserModalOpen, setIsUserModalOpen] = useState(false)
   
   const [editingPost, setEditingPost] = useState<any>(null)
   const [editingTestimony, setEditingTestimony] = useState<any>(null)
   const [editingService, setEditingService] = useState<any>(null)
+  const [editingUser, setEditingUser] = useState<any>(null)
 
   useEffect(() => {
     const token = localStorage.getItem('admin_token')
@@ -120,8 +123,8 @@ export default function AdminDashboard() {
         fetch('/api/admin/summary', { headers: { 'Authorization': `Bearer ${token}` } }),
         fetch('/api/consultations?limit=50', { headers: { 'Authorization': `Bearer ${token}` } }),
         fetch('/api/admin/blog-posts', { headers: { 'Authorization': `Bearer ${token}` } }),
-        fetch('/api/testimonies', { headers: { 'Authorization': `Bearer ${token}` } }),
-        fetch('/api/services', { headers: { 'Authorization': `Bearer ${token}` } }),
+        fetch('/api/admin/testimonies', { headers: { 'Authorization': `Bearer ${token}` } }),
+        fetch('/api/admin/services', { headers: { 'Authorization': `Bearer ${token}` } }),
         fetch('/api/settings'),
         fetch('/api/admin/ai/logs', { headers: { 'Authorization': `Bearer ${token}` } })
       ])
@@ -133,6 +136,12 @@ export default function AdminDashboard() {
       if (servicesRes.ok) setServices((await servicesRes.json()).services || [])
       if (settingsRes.ok) setSiteSettings((await settingsRes.json()).settings || {})
       if (aiLogsRes.ok) setAiLogs((await aiLogsRes.json()).logs || [])
+      
+      // Fetch admin users for superadmin
+      if (user?.role === 'superadmin') {
+        const usersRes = await fetch('/api/admin/users', { headers: { 'Authorization': `Bearer ${token}` } })
+        if (usersRes.ok) setAdminUsers((await usersRes.json()).users || [])
+      }
       
     } catch (error) {
       console.error('Failed to fetch dashboard data', error)
@@ -257,6 +266,27 @@ export default function AdminDashboard() {
       })
       if (res.ok) { toast.success('Service saved'); setIsServiceModalOpen(false); fetchDashboardData(token!); }
     } catch (error) { toast.error('Error saving service') }
+  }
+
+  const handleUserSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    const formData = new FormData(e.currentTarget as HTMLFormElement)
+    const data = {
+      username: formData.get('username'),
+      email: formData.get('email'),
+      role: formData.get('role'),
+      password: formData.get('password')
+    }
+    const token = localStorage.getItem('admin_token')
+    try {
+      const res = await fetch('/api/admin/users', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify(data)
+      })
+      if (res.ok) { toast.success('User created'); setIsUserModalOpen(false); fetchDashboardData(token!); }
+      else { const err = await res.json(); toast.error(err.error || 'Error creating user') }
+    } catch (error) { toast.error('Error creating user') }
   }
 
   const handleSettingsSubmit = async (e: React.FormEvent) => {
@@ -391,7 +421,7 @@ export default function AdminDashboard() {
                 <StatCard title="Consultations" value={stats?.consultations ?? '...'} icon={Calendar} color="bg-blue-500" />
                 <StatCard title="Blog Posts" value={stats?.blogPosts ?? '...'} icon={FileText} color="bg-purple-500" />
                 <StatCard title="Testimonials" value={stats?.testimonials ?? '...'} icon={MessageSquare} color="bg-pink-500" />
-                <StatCard title="Subscribers" value={stats?.subscribers ?? '...'} icon={Users} color="bg-green-500" />
+                <StatCard title="Visitors" value={stats?.visitors ?? '...'} icon={Globe} color="bg-orange-500" />
               </div>
               <div className="bg-white rounded-2xl border p-6">
                 <h3 className="font-bold mb-4">Recent Consultations</h3>
@@ -418,11 +448,12 @@ export default function AdminDashboard() {
                 <Button className="bg-[#f8a4b9]" onClick={() => { setEditingPost(null); setIsBlogModalOpen(true); }}><Plus className="w-4 h-4 mr-2" /> New Post</Button>
               </div>
               <table className="w-full text-left">
-                <thead><tr className="bg-gray-50 text-xs text-gray-500 uppercase"><th className="px-6 py-3">Title</th><th className="px-6 py-3">Status</th><th className="px-6 py-3 text-right">Actions</th></tr></thead>
+                <thead><tr className="bg-gray-50 text-xs text-gray-500 uppercase"><th className="px-6 py-3">Title</th><th className="px-6 py-3">Category</th><th className="px-6 py-3">Status</th><th className="px-6 py-3 text-right">Actions</th></tr></thead>
                 <tbody className="divide-y">
                   {blogPosts.map(p => (
                     <tr key={p.id} className="text-sm">
                       <td className="px-6 py-4 truncate max-w-xs">{p.title}</td>
+                      <td className="px-6 py-4"><span className="px-2 py-1 bg-gray-100 rounded text-[10px] font-bold">{p.category}</span></td>
                       <td className="px-6 py-4"><span className={`px-2 py-1 rounded-full text-[10px] font-bold uppercase ${p.published_at ? 'bg-green-50 text-green-600' : 'bg-amber-50 text-amber-600'}`}>{p.published_at ? 'Published' : 'Draft'}</span></td>
                       <td className="px-6 py-4 text-right">
                         <Button variant="ghost" size="sm" onClick={() => { setEditingPost(p); setIsBlogModalOpen(true); }}><Edit className="w-4 h-4" /></Button>
@@ -487,16 +518,20 @@ export default function AdminDashboard() {
                     <Clock className="w-4 h-4 text-gray-400" />
                     Automation Activity
                   </h3>
-                  <div className="space-y-4">
-                    {aiLogs.length > 0 ? aiLogs.map((log) => (
-                      <div key={log.id} className="border-l-2 border-[#f8a4b9] pl-4 py-1">
-                        <p className="text-xs font-bold text-gray-900 capitalize">{log.action}: {log.status}</p>
-                        <p className="text-[10px] text-gray-500 mt-1 line-clamp-1">{log.message || log.topic}</p>
-                        <p className="text-[9px] text-gray-400 mt-1">{new Date(log.created_at).toLocaleString()}</p>
+                  <div className="space-y-4 max-h-[500px] overflow-y-auto pr-2">
+                    {aiLogs.length === 0 && <p className="text-xs text-gray-500 italic">No activity recorded yet.</p>}
+                    {aiLogs.map((log: any) => (
+                      <div key={log.id} className="p-3 rounded-lg bg-gray-50 border border-gray-100">
+                        <div className="flex items-center justify-between mb-1">
+                          <span className={`text-[10px] font-bold uppercase px-1.5 py-0.5 rounded ${log.status === 'success' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                            {log.status}
+                          </span>
+                          <span className="text-[10px] text-gray-400">{new Date(log.created_at).toLocaleDateString()}</span>
+                        </div>
+                        <p className="text-xs font-bold truncate">{log.action.toUpperCase()}: {log.topic}</p>
+                        <p className="text-[10px] text-gray-500 line-clamp-2 mt-1">{log.message}</p>
                       </div>
-                    )) : (
-                      <p className="text-sm text-gray-400 text-center py-8">No activity logs yet.</p>
-                    )}
+                    ))}
                   </div>
                 </div>
               </div>
@@ -559,18 +594,54 @@ export default function AdminDashboard() {
                 <Button variant="outline" size="sm" onClick={() => { const token = localStorage.getItem('admin_token'); window.open(`/api/consultations/csv?token=${token}`, '_blank'); }}>Export CSV</Button>
               </div>
               <table className="w-full text-left">
-                <thead><tr className="bg-gray-50 text-xs text-gray-500 uppercase"><th className="px-6 py-3">Client</th><th className="px-6 py-3">Status</th><th className="px-6 py-3 text-right">Actions</th></tr></thead>
+                <thead>
+                  <tr className="bg-gray-50 text-xs text-gray-500 uppercase">
+                    <th className="px-6 py-3">Client</th>
+                    <th className="px-6 py-3">Date</th>
+                    <th className="px-6 py-3">Location</th>
+                    <th className="px-6 py-3">Status</th>
+                    <th className="px-6 py-3 text-right">Actions</th>
+                  </tr>
+                </thead>
                 <tbody className="divide-y">
                   {recentConsultations.map(c => (
                     <tr key={c.id} className="text-sm">
                       <td className="px-6 py-4"><div>{c.first_name} {c.last_name}</div><div className="text-xs text-gray-500">{c.email} | {c.phone}</div></td>
+                      <td className="px-6 py-4 text-xs">{new Date(c.created_at).toLocaleDateString()}</td>
+                      <td className="px-6 py-4 text-xs">{c.location}</td>
                       <td className="px-6 py-4">
                         <select defaultValue={c.status} onChange={async (e) => { const token = localStorage.getItem('admin_token'); await fetch(`/api/consultations/${c.id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, body: JSON.stringify({ status: e.target.value }) }); fetchDashboardData(token!); }} className="text-[10px] font-bold uppercase p-1 rounded border">
                           <option value="pending">Pending</option><option value="confirmed">Confirmed</option><option value="completed">Completed</option>
                         </select>
                       </td>
-                      <td className="px-6 py-4 text-right">
+                      <td className="px-6 py-4 text-right flex justify-end gap-2">
+                        <Button variant="ghost" size="sm" onClick={() => alert(`Message: ${c.message}`)}><Eye className="w-4 h-4" /></Button>
                         <Button variant="ghost" size="sm" className="text-red-500" onClick={async () => { if(confirm('Delete?')) { const token = localStorage.getItem('admin_token'); await fetch(`/api/consultations/${c.id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } }); fetchDashboardData(token!); } }}><Trash2 className="w-4 h-4" /></Button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+
+          {activeTab === 'users' && user?.role === 'superadmin' && (
+            <div className="bg-white rounded-2xl border overflow-hidden">
+              <div className="p-6 border-b flex justify-between items-center">
+                <h3 className="font-bold">Admin Users</h3>
+                <Button className="bg-[#f8a4b9]" onClick={() => { setEditingUser(null); setIsUserModalOpen(true); }}><Plus className="w-4 h-4 mr-2" /> Add User</Button>
+              </div>
+              <table className="w-full text-left">
+                <thead><tr className="bg-gray-50 text-xs text-gray-500 uppercase"><th className="px-6 py-3">User</th><th className="px-6 py-3">Role</th><th className="px-6 py-3 text-right">Actions</th></tr></thead>
+                <tbody className="divide-y">
+                  {adminUsers.map(u => (
+                    <tr key={u.id} className="text-sm">
+                      <td className="px-6 py-4"><div>{u.username}</div><div className="text-xs text-gray-500">{u.email}</div></td>
+                      <td className="px-6 py-4 capitalize">{u.role}</td>
+                      <td className="px-6 py-4 text-right">
+                        {u.id !== 1 && (
+                          <Button variant="ghost" size="sm" className="text-red-500" onClick={async () => { if(confirm('Delete user?')) { const token = localStorage.getItem('admin_token'); await fetch(`/api/admin/users/${u.id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } }); fetchDashboardData(token!); } }}><Trash2 className="w-4 h-4" /></Button>
+                        )}
                       </td>
                     </tr>
                   ))}
@@ -586,12 +657,32 @@ export default function AdminDashboard() {
                 <div className="grid grid-cols-2 gap-6">
                   <div><label className="text-sm font-medium">Company Name</label><Input name="company_name" defaultValue={siteSettings.company_name} /></div>
                   <div><label className="text-sm font-medium">Contact Email</label><Input name="contact_email" defaultValue={siteSettings.contact_email} /></div>
-                  <div><label className="text-sm font-medium">Contact Phone</label><Input name="contact_phone" defaultValue={siteSettings.contact_phone} /></div>
+                  <div><label className="text-sm font-medium">Contact Phone (NG)</label><Input name="contact_phone" defaultValue={siteSettings.contact_phone} /></div>
+                  <div><label className="text-sm font-medium">WhatsApp Number</label><Input name="whatsapp_number" defaultValue={siteSettings.whatsapp_number} /></div>
+                  <div><label className="text-sm font-medium">UK Phone</label><Input name="uk_phone" defaultValue={siteSettings.uk_phone} /></div>
+                  <div><label className="text-sm font-medium">USA Phone</label><Input name="usa_phone" defaultValue={siteSettings.usa_phone} /></div>
                   <div><label className="text-sm font-medium">Consultation Fee</label><Input name="consultation_fee" defaultValue={siteSettings.consultation_fee} /></div>
                 </div>
-                <div><label className="text-sm font-medium">Address (Nigeria)</label><Textarea name="address_nigeria" defaultValue={siteSettings.address_nigeria} /></div>
-                <div><label className="text-sm font-medium">Address (UK)</label><Textarea name="address_uk" defaultValue={siteSettings.address_uk} /></div>
-                <div className="flex justify-end"><Button type="submit" className="bg-[#f8a4b9]">Save All Settings</Button></div>
+                <div className="grid grid-cols-1 gap-6">
+                  <div><label className="text-sm font-medium">Address (Nigeria)</label><Textarea name="address_nigeria" defaultValue={siteSettings.address_nigeria} /></div>
+                  <div><label className="text-sm font-medium">Address (UK)</label><Textarea name="address_uk" defaultValue={siteSettings.address_uk} /></div>
+                  <div><label className="text-sm font-medium">Address (USA)</label><Textarea name="address_usa" defaultValue={siteSettings.address_usa} /></div>
+                </div>
+                
+                <h3 className="font-bold text-lg mt-8 mb-4">AI Configuration</h3>
+                <div className="grid grid-cols-2 gap-6">
+                  <div>
+                    <label className="text-sm font-medium">AI Provider</label>
+                    <select name="ai_provider" defaultValue={siteSettings.ai_provider} className="w-full h-10 px-3 rounded border">
+                      <option value="gemini">Google Gemini</option>
+                      <option value="openai">OpenAI</option>
+                    </select>
+                  </div>
+                  <div><label className="text-sm font-medium">AI API Key</label><Input name="ai_api_key" type="password" defaultValue={siteSettings.ai_api_key} placeholder="Enter your key" /></div>
+                  <div className="col-span-2"><label className="text-sm font-medium">AI Topics (Comma separated)</label><Textarea name="ai_topics" defaultValue={siteSettings.ai_topics} /></div>
+                </div>
+
+                <div className="flex justify-end pt-6"><Button type="submit" className="bg-[#f8a4b9]">Save All Settings</Button></div>
               </form>
             </div>
           )}
@@ -605,12 +696,31 @@ export default function AdminDashboard() {
           <form onSubmit={handleBlogSubmit} className="space-y-4">
             <Input name="title" defaultValue={editingPost?.title} placeholder="Title" required />
             <div className="grid grid-cols-2 gap-4">
-              <Input name="author" defaultValue={editingPost?.author || user?.username} placeholder="Author" />
-              <select name="status" defaultValue={editingPost?.published_at ? 'published' : 'draft'} className="h-10 px-3 rounded border">
-                <option value="draft">Draft</option><option value="published">Published</option>
-              </select>
+              <div>
+                <label className="text-xs font-bold uppercase text-gray-500 mb-1 block">Author</label>
+                <Input name="author" defaultValue={editingPost?.author || user?.username} placeholder="Author" />
+              </div>
+              <div>
+                <label className="text-xs font-bold uppercase text-gray-500 mb-1 block">Category</label>
+                <select name="category" defaultValue={editingPost?.category || 'Surrogacy'} className="w-full h-10 px-3 rounded border text-sm">
+                  {['Surrogacy', 'Parenthood', 'IVF', 'Egg Donation', 'Legal', 'Health'].map(c => (
+                    <option key={c} value={c}>{c}</option>
+                  ))}
+                </select>
+              </div>
             </div>
-            <Input name="imageUrl" defaultValue={editingPost?.image_url} placeholder="Image URL" />
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="text-xs font-bold uppercase text-gray-500 mb-1 block">Status</label>
+                <select name="status" defaultValue={editingPost?.published_at ? 'published' : 'draft'} className="w-full h-10 px-3 rounded border text-sm">
+                  <option value="draft">Draft</option><option value="published">Published</option>
+                </select>
+              </div>
+              <div>
+                <label className="text-xs font-bold uppercase text-gray-500 mb-1 block">Image URL</label>
+                <Input name="imageUrl" defaultValue={editingPost?.image_url} placeholder="Image URL" />
+              </div>
+            </div>
             <Textarea name="excerpt" defaultValue={editingPost?.excerpt} placeholder="Excerpt" />
             <Textarea name="content" defaultValue={editingPost?.content} placeholder="Content" rows={10} required />
             <DialogFooter><Button type="submit" className="bg-[#f8a4b9]">Save Post</Button></DialogFooter>
@@ -641,6 +751,21 @@ export default function AdminDashboard() {
             <Textarea name="features" defaultValue={editingService?.features?.join('\n')} placeholder="Features (one per line)" />
             <div className="flex items-center gap-2"><input type="checkbox" name="active" defaultChecked={editingService?.active !== 0} /> <label>Active</label></div>
             <DialogFooter><Button type="submit" className="bg-[#f8a4b9]">Save Service</Button></DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+      <Dialog open={isUserModalOpen} onOpenChange={setIsUserModalOpen}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Add New Admin</DialogTitle></DialogHeader>
+          <form onSubmit={handleUserSubmit} className="space-y-4">
+            <Input name="username" placeholder="Username" required />
+            <Input name="email" type="email" placeholder="Email" required />
+            <Input name="password" type="password" placeholder="Password" required />
+            <select name="role" className="w-full h-10 px-3 rounded border" defaultValue="admin">
+              <option value="admin">Admin</option>
+              <option value="superadmin">Superadmin</option>
+            </select>
+            <DialogFooter><Button type="submit" className="bg-[#f8a4b9]">Create User</Button></DialogFooter>
           </form>
         </DialogContent>
       </Dialog>

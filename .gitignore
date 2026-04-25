@@ -11,6 +11,8 @@ pnpm-debug.log*
 .env.local
 .env.*.local
 .env.production.local
+api/.env
+*.env
 
 # Build output
 dist/
@@ -44,34 +46,6 @@ logs/
 tmp/
 temp/
 *.tmp
-
-# OS specific
-.DS_Store
-.env.example~
-*.bak
-
-# Package manager
-.Lock
-package-lock.json~
-yarn.lock~
-
-# Testing
-coverage/
-.nyc_output/
-.coverage/
-htmlcov/
-
-# Git
-.git/
-.gitignore~
-
-# Backups - but version control some
-!backups/.gitkeep
-backups/*.sqlite
-
-# Node heap snapshots
-heap-snapshots/
-*.heapsnapshot
 
 # PM2
 ecosystem.config.js~

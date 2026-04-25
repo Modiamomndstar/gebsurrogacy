@@ -19,7 +19,8 @@ import {
   RefreshCw,
   Clock,
   Eye,
-  EyeOff
+  EyeOff,
+  Globe
 } from 'lucide-react'
 import { 
   Dialog, 
@@ -98,7 +99,6 @@ export default function AdminDashboard() {
   const [editingPost, setEditingPost] = useState<any>(null)
   const [editingTestimony, setEditingTestimony] = useState<any>(null)
   const [editingService, setEditingService] = useState<any>(null)
-  const [editingUser, setEditingUser] = useState<any>(null)
 
   useEffect(() => {
     const token = localStorage.getItem('admin_token')
@@ -225,13 +225,14 @@ export default function AdminDashboard() {
 
   const handleTestimonySubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    const formData = new FormData(e.currentTarget as HTMLFormElement)
+    const formData = new FormData(e.target as HTMLFormElement);
     const data = {
       name: formData.get('name'),
       location: formData.get('location'),
       quote: formData.get('quote'),
-      active: formData.get('active') === 'on'
-    }
+      image_url: formData.get('image_url'),
+      active: formData.get('active') === 'on' ? 1 : 0
+    };
     const token = localStorage.getItem('admin_token')
     const url = editingTestimony ? `/api/testimonies/${editingTestimony.id}` : '/api/testimonies'
     const method = editingTestimony ? 'PUT' : 'POST'
@@ -629,7 +630,7 @@ export default function AdminDashboard() {
             <div className="bg-white rounded-2xl border overflow-hidden">
               <div className="p-6 border-b flex justify-between items-center">
                 <h3 className="font-bold">Admin Users</h3>
-                <Button className="bg-[#f8a4b9]" onClick={() => { setEditingUser(null); setIsUserModalOpen(true); }}><Plus className="w-4 h-4 mr-2" /> Add User</Button>
+                <Button className="bg-[#f8a4b9]" onClick={() => { setIsUserModalOpen(true); }}><Plus className="w-4 h-4 mr-2" /> Add User</Button>
               </div>
               <table className="w-full text-left">
                 <thead><tr className="bg-gray-50 text-xs text-gray-500 uppercase"><th className="px-6 py-3">User</th><th className="px-6 py-3">Role</th><th className="px-6 py-3 text-right">Actions</th></tr></thead>
@@ -676,6 +677,7 @@ export default function AdminDashboard() {
                     <select name="ai_provider" defaultValue={siteSettings.ai_provider} className="w-full h-10 px-3 rounded border">
                       <option value="gemini">Google Gemini</option>
                       <option value="openai">OpenAI</option>
+                      <option value="groq">Groq (Fast/Free Testing)</option>
                     </select>
                   </div>
                   <div><label className="text-sm font-medium">AI API Key</label><Input name="ai_api_key" type="password" defaultValue={siteSettings.ai_api_key} placeholder="Enter your key" /></div>
@@ -735,6 +737,7 @@ export default function AdminDashboard() {
             <Input name="name" defaultValue={editingTestimony?.name} placeholder="Name" required />
             <Input name="location" defaultValue={editingTestimony?.location} placeholder="Location" />
             <Textarea name="quote" defaultValue={editingTestimony?.quote} placeholder="Quote" required />
+            <Input name="image_url" defaultValue={editingTestimony?.image_url} placeholder="Image URL (Optional)" />
             <div className="flex items-center gap-2"><input type="checkbox" name="active" defaultChecked={editingTestimony?.active !== 0} /> <label>Visible on landing page</label></div>
             <DialogFooter><Button type="submit" className="bg-[#f8a4b9]">Save Testimony</Button></DialogFooter>
           </form>

@@ -119,6 +119,9 @@ const STATS = [
 function Home() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [isConsultDialogOpen, setIsConsultDialogOpen] = useState(false)
+  const [isScrolled, setIsScrolled] = useState(false)
+  const [siteSettings, setSiteSettings] = useState<any>({})
+  const [activeService, setActiveService] = useState<number>(0)
   const [blogPosts, setBlogPosts] = useState<any[]>([])
   const [services, setServices] = useState<any[]>([])
   const [testimonials, setTestimonials] = useState<any[]>([])
@@ -127,26 +130,27 @@ function Home() {
   useEffect(() => {
     const fetchContent = async () => {
       try {
-        const [blogRes, servicesRes, testimoniesRes] = await Promise.all([
+        const [blogRes, servicesRes, testimoniesRes, settingsRes] = await Promise.all([
           fetch('/api/blog-posts?limit=3'),
           fetch('/api/services'),
-          fetch('/api/testimonies')
+          fetch('/api/testimonies'),
+          fetch('/api/settings')
         ]);
         
         if (blogRes.ok) setBlogPosts((await blogRes.json()).posts || []);
-        if (servicesRes.ok) setServices((await servicesRes.json()).services || []);
+        if (servicesRes.ok) {
+          const data = await servicesRes.json();
+          setServices(data.services || []);
+          if (data.services?.length > 0) setActiveService(0);
+        }
         if (testimoniesRes.ok) setTestimonials((await testimoniesRes.json()).testimonies || []);
+        if (settingsRes.ok) setSiteSettings((await settingsRes.json()).settings || {});
       } catch (err) {
         console.error('Fetch error:', err);
       }
     };
     fetchContent();
   }, [])
-
-  const [isScrolled, setIsScrolled] = useState(false)
-  const [isMenuOpen, setIsMenuOpen] = useState(false)
-  const [isConsultDialogOpen, setIsConsultDialogOpen] = useState(false)
-  const [siteSettings, setSiteSettings] = useState<any>({})
   
   const heroRef = useRef<HTMLDivElement>(null)
   const aboutRef = useRef<HTMLDivElement>(null)
@@ -159,21 +163,8 @@ function Home() {
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 20)
     window.addEventListener('scroll', handleScroll)
-    fetchSettings()
     return () => window.removeEventListener('scroll', handleScroll)
   }, [])
-
-  const fetchSettings = async () => {
-    try {
-      const response = await fetch('/api/settings')
-      const data = await response.json()
-      if (data.settings) {
-        setSiteSettings(data.settings)
-      }
-    } catch (error) {
-      console.error('Failed to fetch settings:', error)
-    }
-  }
 
   // GSAP animations
   useEffect(() => {
@@ -733,8 +724,12 @@ function Home() {
                   <div className="text-6xl text-[#f8a4b9] font-serif mb-4">"</div>
                   <p className="text-[#666666] mb-6 italic">{testimonial.quote}</p>
                   <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 bg-[#ffeef2] rounded-full flex items-center justify-center">
-                      <Users className="w-6 h-6 text-[#f8a4b9]" />
+                    <div className="w-12 h-12 bg-[#ffeef2] rounded-full flex items-center justify-center overflow-hidden border-2 border-[#ffeef2]">
+                      {testimonial.image_url ? (
+                        <img src={testimonial.image_url} alt={testimonial.author || testimonial.name} className="w-full h-full object-cover" />
+                      ) : (
+                        <Users className="w-6 h-6 text-[#f8a4b9]" />
+                      )}
                     </div>
                     <div>
                       <div className="font-semibold text-[#2d2d2d]">{testimonial.author || testimonial.name}</div>

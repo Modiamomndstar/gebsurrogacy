@@ -1,4 +1,5 @@
 const express = require("express");
+const path = require("path");
 const cors = require("cors");
 const sqlite3 = require("sqlite3").verbose();
 const nodemailer = require("nodemailer");
@@ -64,12 +65,22 @@ const verifyPassword = (password, storedHash) => {
 };
 
 // Security Middleware
-app.use(helmet());
+app.use(
+  helmet({
+    contentSecurityPolicy: {
+      directives: {
+        ...helmet.contentSecurityPolicy.getDefaultDirectives(),
+        "img-src": ["'self'", "data:", "https://images.unsplash.com", "https://source.unsplash.com", "https://*.googleusercontent.com"],
+        "script-src": ["'self'", "'unsafe-inline'", "https://*.googletagmanager.com"],
+        "style-src": ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+        "font-src": ["'self'", "https://fonts.gstatic.com"],
+      },
+    },
+  })
+);
 app.use(
   cors({
-    origin: process.env.CORS_ORIGIN
-      ? process.env.CORS_ORIGIN.split(",")
-      : ["http://localhost:5172", "http://localhost:5173", "http://localhost:3001"],
+    origin: true, // Allow all origins in production for simplicity with proxy
     credentials: true,
   }),
 );
@@ -155,10 +166,12 @@ const callAI = async (prompt, provider = "gemini", apiKey = "") => {
       url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
       data = JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] });
       headers = { "Content-Type": "application/json" };
-    } else if (provider === "openai") {
-      url = "https://api.openai.com/v1/chat/completions";
+    } else if (provider === "openai" || provider === "groq") {
+      url = provider === "groq" 
+        ? "https://api.groq.com/openai/v1/chat/completions"
+        : "https://api.openai.com/v1/chat/completions";
       data = JSON.stringify({
-        model: "gpt-3.5-turbo",
+        model: provider === "groq" ? "llama3-8b-8192" : "gpt-3.5-turbo",
         messages: [{ role: "user", content: prompt }]
       });
       headers = {
@@ -261,7 +274,7 @@ function ensureDefaultSettings(callback) {
     { key: "address_usa", value: "California, USA", desc: "USA Presence Address" },
     { key: "uk_phone", value: "+44 7933 193271", desc: "UK Phone Number" },
     { key: "usa_phone", value: "+1 310 218 8513", desc: "USA Phone Number" },
-    { key: "ai_provider", value: "gemini", desc: "AI provider (gemini or openai)" },
+    { key: "ai_provider", value: "gemini", desc: "AI provider (gemini, openai, or groq)" },
     { key: "ai_api_key", value: "", desc: "API key for the AI provider" },
     { key: "ai_topics", value: "Gestational Surrogacy, IVF Journey, Pregnancy Tips, Parenthood in UK/Nigeria", desc: "Topics for AI to focus on" },
     { key: "ai_auto_posting", value: "disabled", desc: "Enable or disable daily auto-posting" }
@@ -463,10 +476,18 @@ function initializeDatabase(callback) {
         name TEXT NOT NULL,
         location TEXT,
         quote TEXT NOT NULL,
+        image_url TEXT,
         active INTEGER DEFAULT 1,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP
       )
-    `);
+    `, () => {
+      // Add image_url if it doesn't exist
+      db.all("PRAGMA table_info(testimonies)", (err, columns) => {
+        if (!err && columns && !columns.some(c => c.name === 'image_url')) {
+          db.run("ALTER TABLE testimonies ADD COLUMN image_url TEXT");
+        }
+      });
+    });
 
     // Services table
     db.run(`
@@ -811,11 +832,11 @@ app.get("/api/admin/testimonies", authenticateAdmin, (req, res) => {
 
 // Create testimony (admin)
 app.post("/api/testimonies", authenticateAdmin, (req, res) => {
-  const { name, location, quote } = req.body;
+  const { name, location, quote, image_url } = req.body;
   if (!name || !quote) return res.status(400).json({ error: "Name and quote are required" });
   
-  db.run("INSERT INTO testimonies (name, location, quote) VALUES (?, ?, ?)", 
-    [validators.sanitize(name), validators.sanitize(location || ""), validators.sanitize(quote)], 
+  db.run("INSERT INTO testimonies (name, location, quote, image_url) VALUES (?, ?, ?, ?)", 
+    [validators.sanitize(name), validators.sanitize(location || ""), validators.sanitize(quote), image_url], 
     function(err) {
       if (err) return res.status(500).json({ error: "Failed to create testimony" });
       res.status(201).json({ success: true, id: this.lastID });
@@ -825,11 +846,11 @@ app.post("/api/testimonies", authenticateAdmin, (req, res) => {
 
 // Update testimony (admin)
 app.put("/api/testimonies/:id", authenticateAdmin, (req, res) => {
-  const { name, location, quote, active } = req.body;
+  const { name, location, quote, active, image_url } = req.body;
   const id = req.params.id;
   
-  db.run("UPDATE testimonies SET name = ?, location = ?, quote = ?, active = ? WHERE id = ?",
-    [validators.sanitize(name), validators.sanitize(location), validators.sanitize(quote), active ? 1 : 0, id],
+  db.run("UPDATE testimonies SET name = ?, location = ?, quote = ?, active = ?, image_url = ? WHERE id = ?",
+    [validators.sanitize(name), validators.sanitize(location), validators.sanitize(quote), active ? 1 : 0, image_url, id],
     function(err) {
       if (err) return res.status(500).json({ error: "Failed to update testimony" });
       res.json({ success: true });
@@ -1443,6 +1464,8 @@ app.post("/api/admin/users", authenticateAdmin, authorizeRoles(["superadmin"]), 
     logger.error("Create admin user error", error);
     res.status(500).json({ error: "Internal server error" });
   }
+});
+
 app.delete("/api/admin/users/:id", authenticateAdmin, authorizeRoles(["superadmin"]), (req, res) => {
   const id = req.params.id;
   if (id == 1) return res.status(403).json({ error: "Cannot delete the primary admin" });
@@ -1550,9 +1573,18 @@ app.use((err, req, res, next) => {
   });
 });
 
-// 404 handler
-app.use((req, res) => {
-  res.status(404).json({ error: "Endpoint not found" });
+// 404 handler for API
+app.use("/api/*", (req, res) => {
+  res.status(404).json({ error: "API endpoint not found" });
+});
+
+// Serve static files from the React app
+const distPath = path.join(__dirname, "../dist");
+app.use(express.static(distPath));
+
+// The "catchall" handler: for any request that doesn't match an API route or a static file, send back index.html.
+app.get("*", (req, res) => {
+  res.sendFile(path.join(distPath, "index.html"));
 });
 
 // Server will start after database initialization completes

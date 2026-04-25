@@ -67,13 +67,9 @@ app.use(cors({ origin: true, credentials: true }));
 app.use(bodyParser.json({ limit: "10mb" }));
 app.use(bodyParser.urlencoded({ extended: true, limit: "10mb" }));
 
-// Rate limiting
-const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 100,
-  message: "Too many requests, please try again later",
-});
-app.use("/api/", limiter);
+// Rate limiting (Temporarily disabled for production stability)
+// const limiter = rateLimit({ ... });
+// app.use("/api/", limiter);
 
 // Database Configuration (NeDB - Pure JS for compatibility)
 const dbPath = process.env.DB_PATH || "./data";
@@ -89,23 +85,22 @@ const db = {
 // Initialize Database
 const initializeDatabase = async () => {
   try {
-    const defaultEmail = process.env.ADMIN_EMAIL || "admin@gebsurrogacy.com";
+    const defaultEmail = (process.env.ADMIN_EMAIL || "admin@gebsurrogacy.com").trim().toLowerCase();
     const defaultPass = process.env.ADMIN_PASSWORD || "Admin@1234";
 
-    // Sync superadmin from .env on every start
-    await db.users.update(
-      { role: "superadmin" },
-      { 
-        $set: { 
-          email: defaultEmail, 
-          username: ADMIN_USERNAME, 
-          password_hash: hashPassword(defaultPass),
-          active: 1 
-        } 
-      },
-      { upsert: true }
-    );
-    logger.info("Superadmin credentials synchronized");
+    logger.info(`Synchronizing Superadmin: ${defaultEmail}`);
+
+    // Force a fresh admin record every time
+    await db.users.remove({ role: "superadmin" }, { multi: true });
+    await db.users.insert({ 
+      email: defaultEmail, 
+      username: ADMIN_USERNAME, 
+      password_hash: hashPassword(defaultPass),
+      role: "superadmin",
+      active: 1 
+    });
+    
+    logger.info("Superadmin account is now LIVE and READY");
 
     // Ensure default services
     const servicesCount = await db.services.count({});

@@ -22,19 +22,16 @@ jobs:
         with:
           node-version: '18'
           cache: 'npm'
-          cache-dependency-path: 'app/package-lock.json'
+          cache-dependency-path: 'package-lock.json'
 
       - name: Install dependencies
         run: npm ci
-        working-directory: app
 
       - name: Run linter
         run: npm run lint
-        working-directory: app
 
       - name: Build
         run: npm run build
-        working-directory: app
 
   # Lint backend
   backend-lint:
@@ -47,11 +44,11 @@ jobs:
         with:
           node-version: '18'
           cache: 'npm'
-          cache-dependency-path: 'app/api/package-lock.json'
+          cache-dependency-path: 'api/package-lock.json'
 
       - name: Install dependencies
         run: npm ci
-        working-directory: app/api
+        working-directory: api
 
   # Build and push Docker images
   build-and-push:
@@ -98,8 +95,8 @@ jobs:
       - name: Build and push frontend
         uses: docker/build-push-action@v4
         with:
-          context: app
-          file: app/Dockerfile.frontend
+          context: .
+          file: Dockerfile.frontend
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta-frontend.outputs.tags }}
           labels: ${{ steps.meta-frontend.outputs.labels }}
@@ -109,8 +106,8 @@ jobs:
       - name: Build and push backend
         uses: docker/build-push-action@v4
         with:
-          context: app
-          file: app/Dockerfile.backend
+          context: .
+          file: Dockerfile.backend
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta-backend.outputs.tags }}
           labels: ${{ steps.meta-backend.outputs.labels }}
@@ -130,21 +127,19 @@ jobs:
 
       - name: Install dependencies (frontend)
         run: npm ci
-        working-directory: app
 
       - name: Install dependencies (backend)
         run: npm ci
-        working-directory: app/api
+        working-directory: api
 
       - name: Run npm audit
         run: |
           npm audit --audit-level=moderate || true
-        working-directory: app
 
       - name: Run npm audit (backend)
         run: |
           npm audit --audit-level=moderate || true
-        working-directory: app/api
+          working-directory: api
 
   # Deploy to production (manual trigger)
   deploy:
@@ -160,7 +155,5 @@ jobs:
           DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
           DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
         run: |
-          # Add deployment script here
           echo "Deploying to production..."
-          # Example: SSH to server and pull latest code
-          # ssh -i $DEPLOY_KEY $DEPLOY_USER@$DEPLOY_HOST 'cd /app && git pull && docker-compose up -d'
+          # To be customized based on Virtualmin setup

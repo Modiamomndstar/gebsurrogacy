@@ -228,6 +228,8 @@ docker-compose ps              # Check status
 docker-compose down            # Stop services
 ```
 
+> With Docker Compose, the frontend is available at `http://localhost:5172` because the host port is mapped from `5172` to container port `5173`.
+
 ## 📋 Configuration
 
 ### Frontend (.env)
@@ -247,7 +249,7 @@ SMTP_USER=your-email@gmail.com
 SMTP_PASS=your-app-password
 ADMIN_EMAIL=gebheritagagency@gmail.com
 ADMIN_PASSWORD_HASH=your-secure-hash
-CORS_ORIGIN=http://localhost:5173
+CORS_ORIGIN=http://localhost:5172
 ```
 
 ## 🤝 Company Information
@@ -255,11 +257,12 @@ CORS_ORIGIN=http://localhost:5173
 - **Name**: GEB Surrogacy Services
 - **Founded**: 2017
 - **Founder & CEO**: Blessing Gbudje
-- **Phone**: +2347034270723
-- **WhatsApp**: +2347034270723
+- **Phone**: +2347034270722
+- **WhatsApp**: +2347034270722
 - **Email**: gebheritagagency@gmail.com
-- **Nigeria Address**: Block D5 Flat 36 CBN Estate 2, Satellite Town Lagos Nigeria
-- **UK Address**: Harley Street, London, UK
+- **Nigeria Address**: Block D5 Flat 36 CBN Estate 2, Satellite Town Lagos, Nigeria
+- **UK Address**: Leeds, UK
+- **USA Address**: California, USA
 - **Facebook**: https://www.facebook.com/share/192smxW7GG/
 - **Instagram**: https://www.instagram.com/geb_surrogacy_services
 
@@ -270,7 +273,7 @@ CORS_ORIGIN=http://localhost:5173
 # Create consultation
 curl -X POST http://localhost:3001/api/consultations \
   -H "Content-Type: application/json" \
-  -d '{"firstName":"John","lastName":"Doe","email":"john@example.com","phone":"+2347034270723"}'
+  -d '{"firstName":"John","lastName":"Doe","email":"john@example.com","phone":"+2347034270722"}'
 
 # Subscribe newsletter
 curl -X POST http://localhost:3001/api/subscribe \
@@ -290,7 +293,7 @@ curl http://localhost:3001/api/consultations \
 lsof -i :3001 | grep LISTEN | awk '{print $2}' | xargs kill -9
 
 # Frontend port 5173
-npm run dev -- --port 5174
+npm run dev -- --port 5172
 ```
 
 ### Database Issues
@@ -340,8 +343,8 @@ ISC License - See LICENSE file for details
 
 For issues, questions, or support:
 - Email: gebheritagagency@gmail.com
-- Phone: +2347034270723
-- WhatsApp: +2347034270723
+- Phone: +2347034270722
+- WhatsApp: +2347034270722
 
 ## ✅ Production Readiness Checklist
 
@@ -555,8 +558,8 @@ pm2 restart geb-api
 
 For support or questions, contact:
 - Email: gebheritagagency@gmail.com
-- Phone: +2347034270723
-- WhatsApp: +2347034270723
+- Phone: +2347034270722
+- WhatsApp: +2347034270722
 
 ## License
 

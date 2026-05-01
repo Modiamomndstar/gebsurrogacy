@@ -90,15 +90,19 @@ const initializeDatabase = async () => {
 
     logger.info(`Synchronizing Superadmin: ${defaultEmail}`);
 
-    // Force a fresh admin record every time
-    await db.users.remove({ role: "superadmin" }, { multi: true });
-    await db.users.insert({ 
-      email: defaultEmail, 
-      username: ADMIN_USERNAME, 
-      password_hash: hashPassword(defaultPass),
-      role: "superadmin",
-      active: 1 
-    });
+    // Sync superadmin from .env on every start (Upsert maintains the same ID)
+    await db.users.update(
+      { role: "superadmin" },
+      { 
+        $set: { 
+          email: defaultEmail, 
+          username: ADMIN_USERNAME, 
+          password_hash: hashPassword(defaultPass),
+          active: 1 
+        } 
+      },
+      { upsert: true }
+    );
     
     logger.info("Superadmin account is now LIVE and READY");
 

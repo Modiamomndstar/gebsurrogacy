@@ -9,6 +9,7 @@ const helmet = require("helmet");
 const validator = require("validator");
 const crypto = require("crypto");
 require("dotenv").config({ path: path.join(__dirname, ".env") });
+const AIEngine = require("./ai_cron");
 
 const app = express();
 app.set("trust proxy", 1);
@@ -80,6 +81,9 @@ const db = {
   messages: Datastore.create(path.join(dbPath, "messages.db")),
   settings: Datastore.create(path.join(dbPath, "settings.db")),
   visitors: Datastore.create(path.join(dbPath, "visitors.db")),
+  consultations: Datastore.create(path.join(dbPath, "consultations.db")),
+  blog_posts: Datastore.create(path.join(dbPath, "blog_posts.db")),
+  ai_logs: Datastore.create(path.join(dbPath, "ai_logs.db")),
 };
 
 // Initialize Database
@@ -135,6 +139,11 @@ const initializeDatabase = async () => {
 
     logger.info("All database tables initialized");
     
+    // Initialize AI Engine
+    const aiEngine = new AIEngine(db);
+    await aiEngine.startCron();
+    app.locals.aiEngine = aiEngine;
+
     app.listen(PORT, "0.0.0.0", () => {
       logger.info(`Server running on port ${PORT}`, { 
         environment: NODE_ENV,
@@ -398,6 +407,163 @@ app.post("/api/track-visit", async (req, res) => {
   } catch (error) {
     res.json({ success: true });
   }
+});
+
+// --- BLOG POSTS (Public & Admin) ---
+app.get("/api/blog-posts", async (req, res) => {
+  try {
+    const posts = await db.blog_posts.find({ status: "published" }).sort({ created_at: -1 });
+    res.json({ posts });
+  } catch (error) {
+    res.status(500).json({ error: "Failed to fetch blog posts" });
+  }
+});
+
+app.get("/api/blog-posts/:id", async (req, res) => {
+  try {
+    const post = await db.blog_posts.findOne({ _id: req.params.id });
+    if (!post) return res.status(404).json({ error: "Post not found" });
+    res.json(post);
+  } catch (error) {
+    res.status(500).json({ error: "Failed to fetch post" });
+  }
+});
+
+app.get("/api/admin/blog-posts", authenticateAdmin, async (req, res) => {
+  try {
+    const posts = await db.blog_posts.find({}).sort({ created_at: -1 });
+    res.json({ posts });
+  } catch (error) {
+    res.status(500).json({ error: "Failed to fetch blog posts" });
+  }
+});
+
+app.post("/api/admin/blog-posts", authenticateAdmin, async (req, res) => {
+  try {
+    const { title, content, excerpt, category, author, status, imageUrl } = req.body;
+    const newPost = await db.blog_posts.insert({
+      title,
+      content,
+      excerpt,
+      category: category || "Surrogacy",
+      author: author || "Admin",
+      status: status || "draft",
+      image_url: imageUrl || `https://source.unsplash.com/800x600/?${encodeURIComponent(category || 'baby')}`,
+      published_at: status === "published" ? new Date() : null,
+      created_at: new Date()
+    });
+    res.status(201).json(newPost);
+  } catch (error) {
+    res.status(500).json({ error: "Failed to create blog post" });
+  }
+});
+
+app.put("/api/admin/blog-posts/:id", authenticateAdmin, async (req, res) => {
+  try {
+    const updates = req.body;
+    if (updates.status === "published" && !updates.published_at) updates.published_at = new Date();
+    await db.blog_posts.update({ _id: req.params.id }, { $set: { ...updates, updated_at: new Date() } });
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error: "Failed to update blog post" });
+  }
+});
+
+app.delete("/api/admin/blog-posts/:id", authenticateAdmin, async (req, res) => {
+  try {
+    await db.blog_posts.remove({ _id: req.params.id });
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error: "Failed to delete blog post" });
+  }
+});
+
+// --- CONSULTATIONS ---
+app.get("/api/consultations", authenticateAdmin, async (req, res) => {
+  try {
+    const consultations = await db.consultations.find({}).sort({ created_at: -1 });
+    res.json({ consultations });
+  } catch (error) {
+    res.status(500).json({ error: "Failed to fetch consultations" });
+  }
+});
+
+app.post("/api/consultations", async (req, res) => {
+  try {
+    const newConsultation = await db.consultations.insert({
+      ...req.body,
+      status: "pending",
+      created_at: new Date()
+    });
+    res.status(201).json(newConsultation);
+  } catch (error) {
+    res.status(500).json({ error: "Failed to book consultation" });
+  }
+});
+
+app.put("/api/consultations/:id", authenticateAdmin, async (req, res) => {
+  try {
+    await db.consultations.update({ _id: req.params.id }, { $set: { status: req.body.status, updated_at: new Date() } });
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error: "Failed to update consultation" });
+  }
+});
+
+app.delete("/api/consultations/:id", authenticateAdmin, async (req, res) => {
+  try {
+    await db.consultations.remove({ _id: req.params.id });
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error: "Failed to delete consultation" });
+  }
+});
+
+// --- AI LOGS & GENERATION ---
+app.get("/api/admin/ai/logs", authenticateAdmin, async (req, res) => {
+  try {
+    const logs = await db.ai_logs.find({}).sort({ created_at: -1 }).limit(50);
+    res.json({ logs });
+  } catch (error) {
+    res.status(500).json({ error: "Failed to fetch AI logs" });
+  }
+});
+
+app.post("/api/admin/ai/generate", authenticateAdmin, async (req, res) => {
+  try {
+    const { topic } = req.body;
+    const aiEngine = req.app.locals.aiEngine;
+    
+    if (!aiEngine) {
+      return res.status(500).json({ error: "AI Engine not initialized" });
+    }
+
+    const settings = await db.settings.findOne({});
+    const defaultTopic = settings?.ai_topics?.split(',')[0]?.trim() || "The benefits of surrogacy";
+    
+    const post = await aiEngine.generatePost(topic || defaultTopic);
+    res.json({ success: true, post });
+  } catch (error) {
+    res.status(500).json({ error: error.message || "Failed to generate AI content" });
+  }
+});
+
+// --- ADMIN SUMMARY ---
+app.get("/api/admin/summary", authenticateAdmin, async (req, res) => {
+  try {
+    const consultations = await db.consultations.count({});
+    const blogPosts = await db.blog_posts.count({});
+    const testimonials = await db.testimonies.count({});
+    const visitors = await db.visitors.count({});
+    res.json({ consultations, blogPosts, testimonials, visitors });
+  } catch (error) {
+    res.status(500).json({ error: "Failed to fetch summary" });
+  }
+});
+
+// Fix 404 JSON for missing API routes before catch-all
+app.use("/api/*", (req, res) => {
+  res.status(404).json({ error: "API Endpoint Not Found" });
 });
 
 // Serve static files

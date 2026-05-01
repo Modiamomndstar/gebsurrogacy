@@ -52,7 +52,16 @@ class AIEngine {
 
       let generatedJsonText = "";
 
-      if (provider === "gemini") {
+      if (provider === "openai") {
+        const OpenAI = require("openai");
+        const openai = new OpenAI({ apiKey });
+        const response = await openai.chat.completions.create({
+          model: "gpt-4o",
+          messages: [{ role: "user", content: prompt }],
+          temperature: 0.7,
+        });
+        generatedJsonText = response.choices[0]?.message?.content || "";
+      } else if (provider === "gemini") {
         const ai = new GoogleGenAI({ apiKey });
         const response = await ai.models.generateContent({
           model: "gemini-2.5-flash",

@@ -32,7 +32,8 @@
     "helmet": "^7.1.0",
     "nedb-promises": "^6.2.3",
     "node-cron": "^4.2.1",
-    "nodemailer": "^8.0.5",
+    "nodemailer": "^8.0.7",
+    "openai": "^6.35.0",
     "validator": "^13.11.0"
   },
   "devDependencies": {

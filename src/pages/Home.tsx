@@ -242,10 +242,35 @@ function Home() {
     setIsMenuOpen(false)
   }
 
-  const handleConsultSubmit = (e: React.FormEvent) => {
+  const handleConsultSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
-    toast.success('Consultation request submitted! We will contact you soon.')
-    setIsConsultDialogOpen(false)
+    const formData = new FormData(e.currentTarget)
+    const data = {
+      first_name: formData.get('first_name'),
+      last_name: formData.get('last_name'),
+      email: formData.get('email'),
+      phone: formData.get('phone'),
+      location: formData.get('location'),
+      preferred_date: formData.get('preferred_date'),
+      message: formData.get('message')
+    }
+
+    try {
+      const res = await fetch('/api/consultations', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      })
+      
+      if (res.ok) {
+        toast.success('Consultation request submitted! We will contact you soon.')
+        setIsConsultDialogOpen(false)
+      } else {
+        toast.error('Failed to submit request. Please try again.')
+      }
+    } catch (err) {
+      toast.error('Network error. Please try again.')
+    }
   }
 
   const handleNewsletterSubmit = (e: React.FormEvent) => {
@@ -1013,32 +1038,32 @@ function Home() {
             <div className="grid sm:grid-cols-2 gap-4">
               <div>
                 <label className="text-sm font-medium mb-1 block">First Name</label>
-                <Input placeholder="John" required />
+                <Input name="first_name" placeholder="John" required />
               </div>
               <div>
                 <label className="text-sm font-medium mb-1 block">Last Name</label>
-                <Input placeholder="Doe" required />
+                <Input name="last_name" placeholder="Doe" required />
               </div>
             </div>
             <div>
               <label className="text-sm font-medium mb-1 block">Email</label>
-              <Input type="email" placeholder="john@example.com" required />
+              <Input name="email" type="email" placeholder="john@example.com" required />
             </div>
             <div>
               <label className="text-sm font-medium mb-1 block">Phone</label>
-              <Input type="tel" placeholder="+234..." required />
+              <Input name="phone" type="tel" placeholder="+234..." required />
             </div>
             <div>
               <label className="text-sm font-medium mb-1 block">Location</label>
-              <Input placeholder="City, Country" required />
+              <Input name="location" placeholder="City, Country" required />
             </div>
             <div>
               <label className="text-sm font-medium mb-1 block">Preferred Date</label>
-              <Input type="date" required />
+              <Input name="preferred_date" type="date" required />
             </div>
             <div>
               <label className="text-sm font-medium mb-1 block">Message</label>
-              <Textarea placeholder="Tell us about your journey and what you're looking for..." rows={4} />
+              <Textarea name="message" placeholder="Tell us about your journey and what you're looking for..." rows={4} />
             </div>
             <Button type="submit" className="w-full bg-[#f8a4b9] hover:bg-[#e88aa3] text-white">
               <Calendar className="w-4 h-4 mr-2" />

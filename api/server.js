@@ -8,8 +8,20 @@ const rateLimit = require("express-rate-limit");
 const helmet = require("helmet");
 const validator = require("validator");
 const crypto = require("crypto");
+const nodemailer = require("nodemailer");
 require("dotenv").config({ path: path.join(__dirname, ".env") });
 const AIEngine = require("./ai_cron");
+
+// Email Transporter setup
+const transporter = nodemailer.createTransport({
+  host: process.env.SMTP_HOST || "smtp.gmail.com",
+  port: parseInt(process.env.SMTP_PORT || "587"),
+  secure: process.env.SMTP_SECURE === "true",
+  auth: {
+    user: process.env.SMTP_USER,
+    pass: process.env.SMTP_PASS,
+  },
+});
 
 const app = express();
 app.set("trust proxy", 1);
@@ -500,11 +512,43 @@ app.get("/api/consultations", authenticateAdmin, async (req, res) => {
 
 app.post("/api/consultations", async (req, res) => {
   try {
+    const { first_name, last_name, email, phone, location, preferred_date, message } = req.body;
+    
     const newConsultation = await db.consultations.insert({
-      ...req.body,
+      first_name,
+      last_name,
+      email,
+      phone,
+      location,
+      preferred_date,
+      message,
       status: "pending",
       created_at: new Date()
     });
+
+    // Send Emails (Don't await to avoid blocking response)
+    const adminEmail = process.env.ADMIN_EMAIL || "admin@gebsurrogacy.com";
+    const settings = await db.settings.findOne({}) || {};
+    const feeInfo = settings.consultation_fee ? `\n\nPlease note the consultation fee is ${settings.consultation_fee}, which will be discussed during our call.` : "";
+    
+    if (process.env.SMTP_USER) {
+      // 1. Notify Admin
+      transporter.sendMail({
+        from: `"GEB Surrogacy System" <${process.env.SMTP_USER}>`,
+        to: adminEmail,
+        subject: `New Consultation Request from ${first_name} ${last_name}`,
+        text: `You have a new consultation request:\n\nName: ${first_name} ${last_name}\nEmail: ${email}\nPhone: ${phone}\nLocation: ${location}\nDate: ${preferred_date}\n\nMessage: ${message || "N/A"}`
+      }).catch(err => logger.error("Failed to send admin email", err));
+
+      // 2. Notify User
+      transporter.sendMail({
+        from: `"GEB Surrogacy Services" <${process.env.SMTP_USER}>`,
+        to: email,
+        subject: `Consultation Request Received - GEB Surrogacy`,
+        text: `Dear ${first_name},\n\nThank you for requesting a consultation with GEB Surrogacy Services. We have received your details for ${preferred_date} and will contact you shortly to confirm the appointment.${feeInfo}\n\nWarm regards,\nThe GEB Surrogacy Team`
+      }).catch(err => logger.error("Failed to send user email", err));
+    }
+
     res.status(201).json(newConsultation);
   } catch (error) {
     res.status(500).json({ error: "Failed to book consultation" });

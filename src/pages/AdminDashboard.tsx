@@ -495,6 +495,7 @@ export default function AdminDashboard() {
                         <select name="ai_provider" defaultValue={siteSettings.ai_provider || 'gemini'} className="w-full h-10 px-3 rounded border border-gray-200">
                           <option value="gemini">Google Gemini</option>
                           <option value="openai">OpenAI (GPT-3.5/4)</option>
+                          <option value="groq">Groq AI (Llama 3)</option>
                         </select>
                       </div>
                       <div className="space-y-2">

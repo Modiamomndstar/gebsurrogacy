@@ -280,7 +280,7 @@ app.get("/api/admin/messages", authenticateAdmin, async (req, res) => {
 app.get("/api/admin/services", authenticateAdmin, async (req, res) => {
   try {
     const services = await db.services.find({}).sort({ created_at: -1 });
-    res.json(services);
+    res.json({ services });
   } catch (error) {
     res.status(500).json({ error: "Failed to fetch services" });
   }
@@ -308,7 +308,7 @@ app.delete("/api/admin/services/:id", authenticateAdmin, async (req, res) => {
 app.get("/api/admin/testimonies", authenticateAdmin, async (req, res) => {
   try {
     const testimonies = await db.testimonies.find({}).sort({ created_at: -1 });
-    res.json(testimonies);
+    res.json({ testimonies });
   } catch (error) {
     res.status(500).json({ error: "Failed to fetch testimonies" });
   }
@@ -336,19 +336,20 @@ app.delete("/api/admin/testimonies/:id", authenticateAdmin, async (req, res) => 
 app.get("/api/admin/settings", authenticateAdmin, async (req, res) => {
   try {
     const settings = await db.settings.findOne({});
-    res.json(settings || {});
+    res.json({ settings: settings || {} });
   } catch (error) {
     res.status(500).json({ error: "Failed to fetch settings" });
   }
 });
 
-app.post("/api/admin/settings", authenticateAdmin, async (req, res) => {
+app.put("/api/admin/settings", authenticateAdmin, async (req, res) => {
   try {
+    const newSettings = req.body.settings || req.body;
     const current = await db.settings.findOne({});
     if (current) {
-      await db.settings.update({ _id: current._id }, { $set: { ...req.body, updated_at: new Date() } });
+      await db.settings.update({ _id: current._id }, { $set: { ...newSettings, updated_at: new Date() } });
     } else {
-      await db.settings.insert({ ...req.body, updated_at: new Date() });
+      await db.settings.insert({ ...newSettings, updated_at: new Date() });
     }
     res.json({ success: true });
   } catch (error) {
@@ -356,11 +357,20 @@ app.post("/api/admin/settings", authenticateAdmin, async (req, res) => {
   }
 });
 
+app.get("/api/admin/users", authenticateAdmin, async (req, res) => {
+  try {
+    const users = await db.users.find({}, { password_hash: 0 }).sort({ created_at: -1 });
+    res.json({ users });
+  } catch (error) {
+    res.status(500).json({ error: "Failed to fetch users" });
+  }
+});
+
 // Public routes
 app.get("/api/services", async (req, res) => {
   try {
     const services = await db.services.find({}).sort({ created_at: -1 });
-    res.json(services);
+    res.json({ services });
   } catch (error) {
     res.status(500).json({ error: "Failed to fetch services" });
   }
@@ -369,7 +379,7 @@ app.get("/api/services", async (req, res) => {
 app.get("/api/testimonies", async (req, res) => {
   try {
     const testimonies = await db.testimonies.find({}).sort({ created_at: -1 });
-    res.json(testimonies);
+    res.json({ testimonies });
   } catch (error) {
     res.status(500).json({ error: "Failed to fetch testimonies" });
   }
@@ -378,7 +388,7 @@ app.get("/api/testimonies", async (req, res) => {
 app.get("/api/settings", async (req, res) => {
   try {
     const settings = await db.settings.findOne({});
-    res.json(settings || {});
+    res.json({ settings: settings || {} });
   } catch (error) {
     res.status(500).json({ error: "Failed to fetch settings" });
   }

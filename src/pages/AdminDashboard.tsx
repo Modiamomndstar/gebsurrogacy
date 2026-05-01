@@ -211,7 +211,7 @@ export default function AdminDashboard() {
       publishedAt: formData.get('status') === 'published' ? new Date().toISOString() : null
     }
     const token = localStorage.getItem('admin_token')
-    const url = editingPost ? `/api/blog-posts/${editingPost.id}` : '/api/blog-posts'
+    const url = editingPost ? `/api/admin/blog-posts/${editingPost.id}` : '/api/admin/blog-posts'
     const method = editingPost ? 'PUT' : 'POST'
     try {
       const res = await fetch(url, {
@@ -234,7 +234,7 @@ export default function AdminDashboard() {
       active: formData.get('active') === 'on' ? 1 : 0
     };
     const token = localStorage.getItem('admin_token')
-    const url = editingTestimony ? `/api/testimonies/${editingTestimony.id}` : '/api/testimonies'
+    const url = editingTestimony ? `/api/admin/testimonies/${editingTestimony.id}` : '/api/admin/testimonies'
     const method = editingTestimony ? 'PUT' : 'POST'
     try {
       const res = await fetch(url, {
@@ -257,7 +257,7 @@ export default function AdminDashboard() {
       active: formData.get('active') === 'on'
     }
     const token = localStorage.getItem('admin_token')
-    const url = editingService ? `/api/services/${editingService.id}` : '/api/services'
+    const url = editingService ? `/api/admin/services/${editingService.id}` : '/api/admin/services'
     const method = editingService ? 'PUT' : 'POST'
     try {
       const res = await fetch(url, {
@@ -458,7 +458,7 @@ export default function AdminDashboard() {
                       <td className="px-6 py-4"><span className={`px-2 py-1 rounded-full text-[10px] font-bold uppercase ${p.published_at ? 'bg-green-50 text-green-600' : 'bg-amber-50 text-amber-600'}`}>{p.published_at ? 'Published' : 'Draft'}</span></td>
                       <td className="px-6 py-4 text-right">
                         <Button variant="ghost" size="sm" onClick={() => { setEditingPost(p); setIsBlogModalOpen(true); }}><Edit className="w-4 h-4" /></Button>
-                        <Button variant="ghost" size="sm" className="text-red-500" onClick={async () => { if(confirm('Delete?')) { const token = localStorage.getItem('admin_token'); await fetch(`/api/blog-posts/${p.id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } }); fetchDashboardData(token!); } }}><Trash2 className="w-4 h-4" /></Button>
+                        <Button variant="ghost" size="sm" className="text-red-500" onClick={async () => { if(confirm('Delete?')) { const token = localStorage.getItem('admin_token'); await fetch(`/api/admin/blog-posts/${p.id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } }); fetchDashboardData(token!); } }}><Trash2 className="w-4 h-4" /></Button>
                       </td>
                     </tr>
                   ))}
@@ -555,7 +555,7 @@ export default function AdminDashboard() {
                       <td className="px-6 py-4"><span className={`px-2 py-1 rounded-full text-[10px] font-bold uppercase ${t.active ? 'bg-green-50 text-green-600' : 'bg-gray-50 text-gray-400'}`}>{t.active ? 'Active' : 'Hidden'}</span></td>
                       <td className="px-6 py-4 text-right">
                         <Button variant="ghost" size="sm" onClick={() => { setEditingTestimony(t); setIsTestimonyModalOpen(true); }}><Edit className="w-4 h-4" /></Button>
-                        <Button variant="ghost" size="sm" className="text-red-500" onClick={async () => { if(confirm('Delete?')) { const token = localStorage.getItem('admin_token'); await fetch(`/api/testimonies/${t.id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } }); fetchDashboardData(token!); } }}><Trash2 className="w-4 h-4" /></Button>
+                        <Button variant="ghost" size="sm" className="text-red-500" onClick={async () => { if(confirm('Delete?')) { const token = localStorage.getItem('admin_token'); await fetch(`/api/admin/testimonies/${t.id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } }); fetchDashboardData(token!); } }}><Trash2 className="w-4 h-4" /></Button>
                       </td>
                     </tr>
                   ))}
@@ -580,6 +580,7 @@ export default function AdminDashboard() {
                       <td className="px-6 py-4"><span className={`px-2 py-1 rounded-full text-[10px] font-bold uppercase ${s.active ? 'bg-green-50 text-green-600' : 'bg-gray-50 text-gray-400'}`}>{s.active ? 'Active' : 'Hidden'}</span></td>
                       <td className="px-6 py-4 text-right">
                         <Button variant="ghost" size="sm" onClick={() => { setEditingService(s); setIsServiceModalOpen(true); }}><Edit className="w-4 h-4" /></Button>
+                        <Button variant="ghost" size="sm" className="text-red-500" onClick={async () => { if(confirm('Delete?')) { const token = localStorage.getItem('admin_token'); await fetch(`/api/admin/services/${s.id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } }); fetchDashboardData(token!); } }}><Trash2 className="w-4 h-4" /></Button>
                       </td>
                     </tr>
                   ))}

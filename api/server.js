@@ -378,6 +378,32 @@ app.get("/api/admin/users", authenticateAdmin, async (req, res) => {
   }
 });
 
+app.post("/api/admin/users", authenticateAdmin, async (req, res) => {
+  try {
+    const { username, email, role, password } = req.body;
+    
+    // Check if user already exists
+    const existing = await db.users.findOne({ $or: [{ username }, { email }] });
+    if (existing) {
+      return res.status(400).json({ error: "Username or email already exists" });
+    }
+
+    const password_hash = hashPassword(password);
+    const newUser = await db.users.insert({
+      username,
+      email,
+      role: role || "admin",
+      password_hash,
+      active: 1,
+      created_at: new Date()
+    });
+
+    res.status(201).json({ success: true, user: { id: newUser._id, username: newUser.username, role: newUser.role } });
+  } catch (error) {
+    res.status(500).json({ error: "Failed to create user" });
+  }
+});
+
 // Public routes
 app.get("/api/services", async (req, res) => {
   try {

@@ -8,7 +8,6 @@ const rateLimit = require("express-rate-limit");
 const helmet = require("helmet");
 const validator = require("validator");
 const crypto = require("crypto");
-const nodemailer = require("nodemailer");
 require("dotenv").config({ path: path.join(__dirname, ".env") });
 const AIEngine = require("./ai_cron");
 

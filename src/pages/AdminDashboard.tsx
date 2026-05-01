@@ -672,20 +672,6 @@ export default function AdminDashboard() {
                   <div><label className="text-sm font-medium">Address (USA)</label><Textarea name="address_usa" defaultValue={siteSettings.address_usa} /></div>
                 </div>
                 
-                <h3 className="font-bold text-lg mt-8 mb-4">AI Configuration</h3>
-                <div className="grid grid-cols-2 gap-6">
-                  <div>
-                    <label className="text-sm font-medium">AI Provider</label>
-                    <select name="ai_provider" defaultValue={siteSettings.ai_provider} className="w-full h-10 px-3 rounded border">
-                      <option value="gemini">Google Gemini</option>
-                      <option value="openai">OpenAI</option>
-                      <option value="groq">Groq (Fast/Free Testing)</option>
-                    </select>
-                  </div>
-                  <div><label className="text-sm font-medium">AI API Key</label><Input name="ai_api_key" type="password" defaultValue={siteSettings.ai_api_key} placeholder="Enter your key" /></div>
-                  <div className="col-span-2"><label className="text-sm font-medium">AI Topics (Comma separated)</label><Textarea name="ai_topics" defaultValue={siteSettings.ai_topics} /></div>
-                </div>
-
                 <div className="flex justify-end pt-6"><Button type="submit" className="bg-[#f8a4b9]">Save All Settings</Button></div>
               </form>
             </div>

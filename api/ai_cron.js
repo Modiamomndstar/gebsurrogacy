@@ -21,7 +21,9 @@ class AIEngine {
       
       // Fallback to .env if not set in DB
       if (!apiKey) {
-        apiKey = provider === "gemini" ? process.env.GEMINI_API_KEY : process.env.GROQ_API_KEY;
+        if (provider === "gemini") apiKey = process.env.GEMINI_API_KEY;
+        else if (provider === "openai") apiKey = process.env.OPENAI_API_KEY;
+        else apiKey = process.env.GROQ_API_KEY;
       }
 
       if (!apiKey || apiKey === "ADD_YOUR_KEY_HERE") {

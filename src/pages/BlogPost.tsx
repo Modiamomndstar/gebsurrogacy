@@ -1,14 +1,16 @@
-import { useState, useEffect } from 'react'
-import { useParams, Link } from 'react-router-dom'
-import { ArrowLeft, Calendar, User, Tag, Share2 } from 'lucide-react'
-import SEO from '@/components/SEO'
-import AdSenseZone from '@/components/AdSenseZone'
 import { Button } from '@/components/ui/button'
+import { Textarea } from '@/components/ui/textarea'
+import { Input } from '@/components/ui/input'
+import { toast } from 'sonner'
+import { Facebook, Instagram, MessageCircle, Twitter, Send } from 'lucide-react'
 
 const BlogPost = () => {
   const { id } = useParams()
   const [post, setPost] = useState<any>(null)
   const [loading, setLoading] = useState(true)
+  const [commentName, setCommentName] = useState('')
+  const [commentText, setCommentText] = useState('')
+  const [submitting, setSubmitting] = useState(false)
 
   useEffect(() => {
     const fetchPost = async () => {
@@ -27,6 +29,48 @@ const BlogPost = () => {
     fetchPost()
     window.scrollTo(0, 0)
   }, [id])
+
+  const handleCommentSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!commentName || !commentText) return
+    setSubmitting(true)
+    try {
+      const res = await fetch(`/api/blog-posts/${id}/comments`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: commentName, content: commentText })
+      })
+      if (res.ok) {
+        toast.success('Comment posted successfully!')
+        setCommentText('')
+        // Reload comments
+        const freshPost = await fetch(`/api/blog-posts/${id}`)
+        if (freshPost.ok) setPost(await freshPost.json())
+      }
+    } catch (err) {
+      toast.error('Failed to post comment')
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  const handleShare = async () => {
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: post.title,
+          text: post.excerpt,
+          url: window.location.href,
+        })
+      } catch (err) {
+        console.error('Error sharing:', err)
+      }
+    } else {
+      // Fallback: Copy to clipboard
+      navigator.clipboard.writeText(window.location.href)
+      toast.success('Link copied to clipboard!')
+    }
+  }
 
   if (loading) return <div className="min-h-screen flex items-center justify-center bg-white"><div className="animate-spin rounded-full h-12 w-12 border-t-2 border-[#f8a4b9]"></div></div>
   if (!post) return <div className="min-h-screen flex flex-col items-center justify-center bg-white">
@@ -74,7 +118,15 @@ const BlogPost = () => {
           <AdSenseZone slot="blog_top" className="mb-8 md:mb-12" />
 
           <div 
-            className="prose prose-sm md:prose-lg max-w-none prose-headings:text-gray-900 prose-p:text-gray-600 prose-a:text-[#f8a4b9] prose-img:rounded-2xl md:prose-img:rounded-3xl"
+            className="prose prose-sm md:prose-lg max-w-none 
+              prose-headings:text-[#2d2d2d] prose-headings:font-serif prose-headings:font-bold prose-headings:mt-12 prose-headings:mb-6
+              prose-h2:text-3xl md:prose-h2:text-4xl prose-h2:border-l-4 prose-h2:border-[#f8a4b9] prose-h2:pl-6
+              prose-h3:text-xl md:prose-h3:text-2xl
+              prose-p:text-[#666666] prose-p:leading-relaxed prose-p:mb-6
+              prose-strong:text-[#2d2d2d] prose-strong:font-bold
+              prose-ul:my-8 prose-li:mb-2
+              prose-a:text-[#f8a4b9] prose-a:font-bold hover:prose-a:text-[#e88aa3]
+              prose-img:rounded-3xl prose-img:shadow-2xl prose-img:my-12"
             dangerouslySetInnerHTML={{ __html: post.content }}
           />
 
@@ -83,13 +135,79 @@ const BlogPost = () => {
 
           <div className="mt-16 pt-8 border-t border-gray-100 flex justify-between items-center">
             <div className="flex gap-4">
-              <Button variant="outline" size="sm" className="rounded-full gap-2" onClick={() => navigator.share({ title: post.title, url: window.location.href })}>
+              <Button variant="outline" size="sm" className="rounded-full gap-2" onClick={handleShare}>
                 <Share2 className="w-4 h-4" /> Share
               </Button>
             </div>
             <div className="flex items-center gap-2 text-gray-400 text-xs">
               <Tag className="w-3 h-3" />
               {post.category}
+            </div>
+          </div>
+
+          {/* Social Media Links */}
+          <div className="mt-12 p-8 bg-[#fcfafb] rounded-3xl border border-[#f0e7ec] text-center">
+            <h4 className="font-bold mb-4">Follow Our Journey</h4>
+            <div className="flex justify-center gap-6">
+              <a href="https://facebook.com/share/192smxW7GG/" target="_blank" className="w-12 h-12 rounded-full bg-white shadow-sm flex items-center justify-center text-[#1877f2] hover:scale-110 transition-all border border-gray-100"><Facebook className="w-6 h-6" /></a>
+              <a href="https://instagram.com/geb_surrogacy_services" target="_blank" className="w-12 h-12 rounded-full bg-white shadow-sm flex items-center justify-center text-[#e4405f] hover:scale-110 transition-all border border-gray-100"><Instagram className="w-6 h-6" /></a>
+              <a href="https://wa.me/2347034270722" target="_blank" className="w-12 h-12 rounded-full bg-white shadow-sm flex items-center justify-center text-[#25d366] hover:scale-110 transition-all border border-gray-100"><MessageCircle className="w-6 h-6" /></a>
+            </div>
+          </div>
+
+          {/* Comments Section */}
+          <div className="mt-16 pt-16 border-t border-gray-100">
+            <h3 className="text-2xl font-bold mb-8 flex items-center gap-3">
+              <MessageCircle className="w-6 h-6 text-[#f8a4b9]" />
+              Community Discussion ({post.comments?.length || 0})
+            </h3>
+
+            {/* Comment Form */}
+            <form onSubmit={handleCommentSubmit} className="space-y-4 mb-12">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <Input 
+                  placeholder="Your Name" 
+                  value={commentName} 
+                  onChange={(e) => setCommentName(e.target.value)}
+                  className="rounded-xl h-12 bg-gray-50 border-transparent focus:bg-white transition-all"
+                  required
+                />
+              </div>
+              <Textarea 
+                placeholder="Share your thoughts or ask a question..." 
+                value={commentText}
+                onChange={(e) => setCommentText(e.target.value)}
+                className="rounded-2xl min-h-[120px] bg-gray-50 border-transparent focus:bg-white transition-all"
+                required
+              />
+              <Button type="submit" disabled={submitting} className="bg-[#f8a4b9] hover:bg-[#e88aa3] text-white px-8 h-12 rounded-xl font-bold gap-2">
+                {submitting ? 'Posting...' : 'Post Comment'} <Send className="w-4 h-4" />
+              </Button>
+            </form>
+
+            {/* Comment List */}
+            <div className="space-y-8">
+              {post.comments?.map((comment: any) => (
+                <div key={comment._id} className="flex gap-4">
+                  <div className="w-10 h-10 rounded-full bg-[#ffeef2] flex-shrink-0 flex items-center justify-center text-[#f8a4b9] font-bold">
+                    {comment.name[0]?.toUpperCase()}
+                  </div>
+                  <div className="flex-1">
+                    <div className="flex items-center gap-3 mb-2">
+                      <span className="font-bold text-sm text-gray-900">{comment.name}</span>
+                      <span className="text-[10px] text-gray-400 uppercase tracking-widest">{new Date(comment.created_at).toLocaleDateString()}</span>
+                    </div>
+                    <p className="text-sm text-gray-600 leading-relaxed bg-gray-50 p-4 rounded-2xl rounded-tl-none">
+                      {comment.content}
+                    </p>
+                  </div>
+                </div>
+              ))}
+              {(!post.comments || post.comments.length === 0) && (
+                <div className="text-center py-12 bg-gray-50 rounded-3xl border-2 border-dashed border-gray-100">
+                  <p className="text-gray-400 italic">No comments yet. Be the first to share your thoughts!</p>
+                </div>
+              )}
             </div>
           </div>
         </article>

@@ -89,6 +89,10 @@ export default function AdminDashboard() {
   const [siteSettings, setSiteSettings] = useState<any>({})
   const [aiLogs, setAiLogs] = useState<any[]>([])
   const [adminUsers, setAdminUsers] = useState<any[]>([])
+  const [newsletterSubscribers, setNewsletterSubscribers] = useState<any[]>([])
+  const [surrogateApps, setSurrogateApps] = useState<any[]>([])
+  const [analytics, setAnalytics] = useState<any[]>([])
+  const [comments, setComments] = useState<any[]>([])
   const [isGenerating, setIsGenerating] = useState(false)
   
   const [isBlogModalOpen, setIsBlogModalOpen] = useState(false)
@@ -129,13 +133,28 @@ export default function AdminDashboard() {
         fetch('/api/admin/ai/logs', { headers: { 'Authorization': `Bearer ${token}` } })
       ])
 
-      if (summaryRes.ok) setStats(await summaryRes.json())
+      if (summaryRes.ok) {
+        const summaryData = await summaryRes.json();
+        setStats(summaryData);
+        setAnalytics(summaryData.analytics || []);
+      }
       if (consultationsRes.ok) setRecentConsultations((await consultationsRes.json()).consultations || [])
       if (blogRes.ok) setBlogPosts((await blogRes.json()).posts || [])
       if (testimoniesRes.ok) setTestimonies((await testimoniesRes.json()).testimonies || [])
       if (servicesRes.ok) setServices((await servicesRes.json()).services || [])
       if (settingsRes.ok) setSiteSettings((await settingsRes.json()).settings || {})
       if (aiLogsRes.ok) setAiLogs((await aiLogsRes.json()).logs || [])
+      
+      // Fetch new collections
+      const [subRes, appsRes] = await Promise.all([
+        fetch('/api/admin/newsletter', { headers: { 'Authorization': `Bearer ${token}` } }),
+        fetch('/api/admin/surrogate-apps', { headers: { 'Authorization': `Bearer ${token}` } })
+      ]);
+      if (subRes.ok) setNewsletterSubscribers((await subRes.json()).subscribers || []);
+      if (appsRes.ok) setSurrogateApps((await appsRes.json()).apps || []);
+      
+      const commentsRes = await fetch('/api/admin/comments', { headers: { 'Authorization': `Bearer ${token}` } });
+      if (commentsRes.ok) setComments((await commentsRes.json()).comments || []);
       
       // Fetch admin users for superadmin
       if (user?.role === 'superadmin') {
@@ -371,10 +390,13 @@ export default function AdminDashboard() {
 
   const menuItems = [
     { id: 'overview', label: 'Overview', icon: LayoutDashboard },
+    { id: 'surrogates', label: 'Surrogate Apps', icon: Baby },
+    { id: 'newsletter', label: 'Subscribers', icon: Mail },
+    { id: 'comments', label: 'Comments', icon: MessageCircle },
+    { id: 'consultations', label: 'Consultations', icon: Calendar },
     { id: 'blog', label: 'Blog Posts', icon: FileText },
     { id: 'testimonials', label: 'Testimonials', icon: MessageSquare },
     { id: 'services', label: 'Services', icon: Briefcase },
-    { id: 'consultations', label: 'Consultations', icon: Calendar },
     { id: 'ai', label: 'AI Automation', icon: Activity, superadminOnly: true },
     { id: 'users', label: 'User Management', icon: Users, superadminOnly: true },
     { id: 'settings', label: 'Site Settings', icon: Settings, superadminOnly: true },
@@ -420,10 +442,30 @@ export default function AdminDashboard() {
             <div className="space-y-8">
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 <StatCard title="Consultations" value={stats?.consultations ?? '...'} icon={Calendar} color="bg-blue-500" />
+                <StatCard title="Surrogate Apps" value={stats?.surrogateApps ?? '...'} icon={Baby} color="bg-pink-500" />
                 <StatCard title="Blog Posts" value={stats?.blogPosts ?? '...'} icon={FileText} color="bg-purple-500" />
-                <StatCard title="Testimonials" value={stats?.testimonials ?? '...'} icon={MessageSquare} color="bg-pink-500" />
                 <StatCard title="Visitors" value={stats?.visitors ?? '...'} icon={Globe} color="bg-orange-500" />
               </div>
+
+              <div className="grid lg:grid-cols-2 gap-8">
+                <div className="bg-white p-6 rounded-2xl border">
+                  <h3 className="font-bold mb-4 flex items-center gap-2">
+                    <LineChart className="w-5 h-5 text-[#f8a4b9]" />
+                    Visitor Trends (Last 7 Days)
+                  </h3>
+                  <div className="space-y-4">
+                    {analytics.map((day: any, i: number) => (
+                      <div key={i} className="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
+                        <span className="text-sm font-medium">{day.date}</span>
+                        <div className="flex items-center gap-4">
+                          <span className="text-xs text-gray-500">Last: {new Date(day.last_visit).toLocaleTimeString()}</span>
+                          <span className="font-bold text-[#f8a4b9]">{day.total_visits} visits</span>
+                        </div>
+                      </div>
+                    ))}
+                    {analytics.length === 0 && <p className="text-center py-8 text-gray-400 italic">No traffic data yet</p>}
+                  </div>
+                </div>
               <div className="bg-white rounded-2xl border p-6">
                 <h3 className="font-bold mb-4">Recent Consultations</h3>
                 <table className="w-full text-left">
@@ -620,6 +662,105 @@ export default function AdminDashboard() {
                       <td className="px-6 py-4 text-right flex justify-end gap-2">
                         <Button variant="ghost" size="sm" onClick={() => alert(`Message: ${c.message}`)}><Eye className="w-4 h-4" /></Button>
                         <Button variant="ghost" size="sm" className="text-red-500" onClick={async () => { if(confirm('Delete?')) { const token = localStorage.getItem('admin_token'); await fetch(`/api/consultations/${c.id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } }); fetchDashboardData(token!); } }}><Trash2 className="w-4 h-4" /></Button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+          {activeTab === 'surrogates' && (
+            <div className="bg-white rounded-2xl border overflow-hidden">
+              <div className="p-6 border-b flex justify-between items-center">
+                <h3 className="font-bold">Surrogate Mother Applications ({surrogateApps.length})</h3>
+              </div>
+              <table className="w-full text-left">
+                <thead>
+                  <tr className="bg-gray-50 text-xs text-gray-500 uppercase">
+                    <th className="px-6 py-3">Applicant</th>
+                    <th className="px-6 py-3">Location</th>
+                    <th className="px-6 py-3 text-center">Previous Births</th>
+                    <th className="px-6 py-3">Status</th>
+                    <th className="px-6 py-3 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y">
+                  {surrogateApps.map(app => (
+                    <tr key={app._id} className="text-sm hover:bg-gray-50 transition-colors">
+                      <td className="px-6 py-4">
+                        <div className="font-bold">{app.fullName}</div>
+                        <div className="text-xs text-gray-500">{app.email}</div>
+                      </td>
+                      <td className="px-6 py-4 text-xs">{app.location}</td>
+                      <td className="px-6 py-4 text-center">{app.previousBirths}</td>
+                      <td className="px-6 py-4">
+                        <span className={`px-2 py-1 rounded-full text-[10px] font-bold uppercase ${
+                          app.status === 'pending' ? 'bg-yellow-50 text-yellow-600' : 'bg-green-50 text-green-600'
+                        }`}>
+                          {app.status}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 text-right flex justify-end gap-2">
+                        <Button variant="ghost" size="sm" onClick={() => alert(`Applicant: ${app.fullName}\nEmail: ${app.email}\nPhone: ${app.phone}\nDOB: ${app.dob}\nLocation: ${app.location}\nPrevious Births: ${app.previousBirths}\nLast Delivery: ${app.lastDelivery}\n\nHealth Summary: ${app.healthSummary}`)}><Eye className="w-4 h-4" /></Button>
+                        <Button variant="ghost" size="sm" className="text-red-500" onClick={async () => { if(confirm('Delete application?')) { const token = localStorage.getItem('admin_token'); await fetch(`/api/admin/surrogate-apps/${app._id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } }); fetchDashboardData(token!); } }}><Trash2 className="w-4 h-4" /></Button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+
+          {activeTab === 'newsletter' && (
+            <div className="bg-white rounded-2xl border overflow-hidden">
+              <div className="p-6 border-b flex justify-between items-center">
+                <h3 className="font-bold">Newsletter Subscribers ({newsletterSubscribers.length})</h3>
+              </div>
+              <table className="w-full text-left">
+                <thead>
+                  <tr className="bg-gray-50 text-xs text-gray-500 uppercase">
+                    <th className="px-6 py-3">Name</th>
+                    <th className="px-6 py-3">Email</th>
+                    <th className="px-6 py-3">Joined Date</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y">
+                  {newsletterSubscribers.map(sub => (
+                    <tr key={sub._id} className="text-sm hover:bg-gray-50 transition-colors">
+                      <td className="px-6 py-4 font-bold">{sub.name}</td>
+                      <td className="px-6 py-4 text-[#f8a4b9]">{sub.email}</td>
+                      <td className="px-6 py-4 text-xs text-gray-400">{new Date(sub.created_at).toLocaleDateString()}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+          {activeTab === 'comments' && (
+            <div className="bg-white rounded-2xl border overflow-hidden">
+              <div className="p-6 border-b">
+                <h3 className="font-bold">Blog Comments ({comments.length})</h3>
+              </div>
+              <table className="w-full text-left">
+                <thead>
+                  <tr className="bg-gray-50 text-xs text-gray-500 uppercase">
+                    <th className="px-6 py-3">User</th>
+                    <th className="px-6 py-3">Comment</th>
+                    <th className="px-6 py-3">Post ID</th>
+                    <th className="px-6 py-3 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y">
+                  {comments.map(c => (
+                    <tr key={c._id} className="text-sm hover:bg-gray-50 transition-colors">
+                      <td className="px-6 py-4">
+                        <div className="font-bold">{c.name}</div>
+                        <div className="text-xs text-gray-400">{new Date(c.created_at).toLocaleString()}</div>
+                      </td>
+                      <td className="px-6 py-4 max-w-md truncate">{c.content}</td>
+                      <td className="px-6 py-4 text-xs font-mono">{c.post_id}</td>
+                      <td className="px-6 py-4 text-right">
+                        <Button variant="ghost" size="sm" className="text-red-500" onClick={async () => { if(confirm('Delete comment?')) { const token = localStorage.getItem('admin_token'); await fetch(`/api/admin/comments/${c._id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } }); fetchDashboardData(token!); } }}><Trash2 className="w-4 h-4" /></Button>
                       </td>
                     </tr>
                   ))}

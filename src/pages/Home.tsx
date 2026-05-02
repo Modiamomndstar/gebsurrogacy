@@ -159,6 +159,13 @@ function Home() {
       }
     };
     fetchContent();
+
+    // Track visit
+    fetch('/api/track-visit', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ pageUrl: window.location.pathname, referrer: document.referrer })
+    }).catch(err => console.error('Visit tracking failed'));
   }, [])
 
   const heroRef = useRef<HTMLDivElement>(null)
@@ -282,9 +289,30 @@ function Home() {
     }
   }
 
-  const handleNewsletterSubmit = (e: React.FormEvent) => {
+  const handleNewsletterSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
-    toast.success('Thank you for subscribing to our newsletter!')
+    const formData = new FormData(e.currentTarget)
+    const data = {
+      name: formData.get('name'),
+      email: formData.get('email')
+    }
+
+    try {
+      const res = await fetch('/api/newsletter', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      })
+      if (res.ok) {
+        toast.success('Thank you for subscribing to our newsletter!')
+        e.currentTarget.reset()
+      } else {
+        const err = await res.json()
+        toast.error(err.error || 'Subscription failed')
+      }
+    } catch (error) {
+      toast.error('Network error. Please try again.')
+    }
   }
 
   return (
@@ -359,6 +387,7 @@ function Home() {
                 { label: 'Services', ref: servicesRef, type: 'scroll' },
                 { label: 'Process', ref: processRef, type: 'scroll' },
                 { label: 'Blog', path: '/blog', type: 'link' },
+                { label: 'Become a Surrogate', path: '/become-a-surrogate', type: 'link' },
                 { label: 'Contact', ref: ctaRef, type: 'scroll' }
               ].map((item) => (
                 item.type === 'scroll' ? (
@@ -419,6 +448,7 @@ function Home() {
                 { label: 'Services', ref: servicesRef, type: 'scroll' },
                 { label: 'Process', ref: processRef, type: 'scroll' },
                 { label: 'Blog', path: '/blog', type: 'link' },
+                { label: 'Become a Surrogate', path: '/become-a-surrogate', type: 'link' },
                 { label: 'Contact', ref: ctaRef, type: 'scroll' }
               ].map((item) => (
                 item.type === 'scroll' ? (
@@ -490,12 +520,13 @@ function Home() {
                     Begin Your Journey
                     <ArrowRight className="w-5 h-5" />
                   </button>
-                  <button
-                    onClick={() => scrollToSection(aboutRef)}
-                    className="btn-secondary"
+                  <Link
+                    to="/become-a-surrogate"
+                    className="btn-secondary flex items-center gap-2"
                   >
-                    Learn More
-                  </button>
+                    Become a Surrogate
+                    <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                  </Link>
                 </div>
 
                 {/* Stats */}
@@ -1030,14 +1061,21 @@ function Home() {
               <div className="max-w-xl mx-auto text-center">
                 <h4 className="font-serif text-lg font-semibold mb-2">Subscribe to Our Newsletter</h4>
                 <p className="text-gray-400 mb-4">Get the latest updates on surrogacy news and stories.</p>
-                <form onSubmit={handleNewsletterSubmit} className="flex gap-2">
+                <form onSubmit={handleNewsletterSubmit} className="flex flex-col sm:flex-row gap-3">
                   <Input
-                    type="email"
-                    placeholder="Enter your email"
-                    className="flex-1 bg-white/10 border-white/20 text-white placeholder:text-gray-500"
+                    name="name"
+                    placeholder="Your Name"
+                    className="flex-1 bg-white/10 border-white/20 text-white placeholder:text-gray-500 rounded-xl h-12"
                     required
                   />
-                  <Button type="submit" className="bg-[#f8a4b9] hover:bg-[#e88aa3] text-white">
+                  <Input
+                    name="email"
+                    type="email"
+                    placeholder="Your Email"
+                    className="flex-1 bg-white/10 border-white/20 text-white placeholder:text-gray-500 rounded-xl h-12"
+                    required
+                  />
+                  <Button type="submit" className="bg-[#f8a4b9] hover:bg-[#e88aa3] text-white px-8 rounded-xl h-12 font-bold transition-all active:scale-95">
                     Subscribe
                   </Button>
                 </form>
@@ -1048,6 +1086,7 @@ function Home() {
             <div className="border-t border-white/10 pt-8 text-center text-gray-400 text-sm">
               <p>&copy; {new Date().getFullYear()} GEB Surrogacy Services. All rights reserved.</p>
               <div className="mt-4 flex justify-center gap-6">
+                <Link to="/become-a-surrogate" className="hover:text-[#f8a4b9] transition-colors">Become a Surrogate</Link>
                 <Link to="/privacy" className="hover:text-[#f8a4b9] transition-colors">Privacy Policy</Link>
                 <Link to="/terms" className="hover:text-[#f8a4b9] transition-colors">Terms of Service</Link>
               </div>

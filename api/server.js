@@ -95,6 +95,10 @@ const db = {
   consultations: Datastore.create(path.join(dbPath, "consultations.db")),
   blog_posts: Datastore.create(path.join(dbPath, "blog_posts.db")),
   ai_logs: Datastore.create(path.join(dbPath, "ai_logs.db")),
+  newsletter: Datastore.create(path.join(dbPath, "newsletter.db")),
+  surrogate_apps: Datastore.create(path.join(dbPath, "surrogate_apps.db")),
+  analytics: Datastore.create(path.join(dbPath, "analytics.db")),
+  comments: Datastore.create(path.join(dbPath, "comments.db")),
 };
 
 // Initialize Database
@@ -445,21 +449,64 @@ app.post("/api/contact", async (req, res) => {
 app.post("/api/track-visit", async (req, res) => {
   try {
     const { pageUrl, referrer } = req.body;
+    const today = new Date().toISOString().split('T')[0];
+    
+    // Log individual visit
     await db.visitors.insert({ 
       ip_address: req.ip, 
       page_url: pageUrl, 
       referrer, 
       visit_time: new Date() 
     });
+
+    // Update daily analytics
+    await db.analytics.update(
+      { date: today },
+      { $inc: { total_visits: 1 }, $set: { last_visit: new Date() } },
+      { upsert: true }
+    );
+
     res.json({ success: true });
   } catch (error) {
     res.json({ success: true });
   }
 });
 
+// Newsletter Subscription
+app.post("/api/newsletter", async (req, res) => {
+  try {
+    const { name, email } = req.body;
+    const existing = await db.newsletter.findOne({ email });
+    if (existing) return res.status(400).json({ error: "Already subscribed" });
+    
+    await db.newsletter.insert({ name, email, created_at: new Date() });
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error: "Subscription failed" });
+  }
+});
+
+// Surrogate Application
+app.post("/api/surrogate-apply", async (req, res) => {
+  try {
+    const appData = { ...req.body, status: "pending", created_at: new Date() };
+    await db.surrogate_apps.insert(appData);
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error: "Application failed" });
+  }
+});
+
 app.get("/api/blog-posts", async (req, res) => {
   try {
-    const rawPosts = await db.blog_posts.find({ status: "published" }).sort({ created_at: -1 });
+    const { category, limit } = req.query;
+    let query = { status: "published" };
+    if (category && category !== 'All') query.category = category;
+    
+    let dbQuery = db.blog_posts.find(query).sort({ created_at: -1 });
+    if (limit) dbQuery = dbQuery.limit(parseInt(limit));
+    
+    const rawPosts = await dbQuery;
     const posts = rawPosts.map(p => ({ ...p, id: p._id }));
     res.json({ posts });
   } catch (error) {
@@ -471,9 +518,32 @@ app.get("/api/blog-posts/:id", async (req, res) => {
   try {
     const post = await db.blog_posts.findOne({ _id: req.params.id });
     if (!post) return res.status(404).json({ error: "Post not found" });
-    res.json(post);
+    
+    // Fetch comments for this post
+    const comments = await db.comments.find({ post_id: req.params.id, status: "approved" }).sort({ created_at: -1 });
+    
+    res.json({ ...post, id: post._id, comments });
   } catch (error) {
     res.status(500).json({ error: "Failed to fetch post" });
+  }
+});
+
+// Blog Comments
+app.post("/api/blog-posts/:id/comments", async (req, res) => {
+  try {
+    const { name, content } = req.body;
+    if (!name || !content) return res.status(400).json({ error: "Name and content required" });
+    
+    const comment = await db.comments.insert({
+      post_id: req.params.id,
+      name,
+      content,
+      status: "approved", // Auto-approve for now, can change to 'pending' later
+      created_at: new Date()
+    });
+    res.status(201).json(comment);
+  } catch (error) {
+    res.status(500).json({ error: "Failed to post comment" });
   }
 });
 
@@ -494,7 +564,7 @@ app.post("/api/admin/blog-posts", authenticateAdmin, async (req, res) => {
       content,
       excerpt,
       category: category || "Surrogacy",
-      author: author || "Admin",
+      author: author || "GEB Surrogacy Manager",
       status: status || "draft",
       image_url: imageUrl || `https://loremflickr.com/800/600/${encodeURIComponent(category || 'family,surrogacy')}`,
       published_at: status === "published" ? new Date() : null,
@@ -637,9 +707,52 @@ app.get("/api/admin/summary", authenticateAdmin, async (req, res) => {
     const blogPosts = await db.blog_posts.count({});
     const testimonials = await db.testimonies.count({});
     const visitors = await db.visitors.count({});
-    res.json({ consultations, blogPosts, testimonials, visitors });
+    const newsletter = await db.newsletter.count({});
+    const surrogateApps = await db.surrogate_apps.count({});
+    
+    // Recent analytics
+    const last7Days = await db.analytics.find({}).sort({ date: -1 }).limit(7);
+    
+    res.json({ consultations, blogPosts, testimonials, visitors, newsletter, surrogateApps, analytics: last7Days });
   } catch (error) {
     res.status(500).json({ error: "Failed to fetch summary" });
+  }
+});
+
+// Admin endpoints for new collections
+app.get("/api/admin/newsletter", authenticateAdmin, async (req, res) => {
+  try {
+    const subscribers = await db.newsletter.find({}).sort({ created_at: -1 });
+    res.json({ subscribers });
+  } catch (error) {
+    res.status(500).json({ error: "Failed to fetch subscribers" });
+  }
+});
+
+app.get("/api/admin/surrogate-apps", authenticateAdmin, async (req, res) => {
+  try {
+    const apps = await db.surrogate_apps.find({}).sort({ created_at: -1 });
+    res.json({ apps });
+  } catch (error) {
+    res.status(500).json({ error: "Failed to fetch applications" });
+  }
+});
+
+app.get("/api/admin/comments", authenticateAdmin, async (req, res) => {
+  try {
+    const comments = await db.comments.find({}).sort({ created_at: -1 });
+    res.json({ comments });
+  } catch (error) {
+    res.status(500).json({ error: "Failed to fetch comments" });
+  }
+});
+
+app.delete("/api/admin/comments/:id", authenticateAdmin, async (req, res) => {
+  try {
+    await db.comments.remove({ _id: req.params.id });
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error: "Failed to delete comment" });
   }
 });
 

@@ -8,15 +8,12 @@ import {
   Facebook, 
   Instagram, 
   MessageCircle, 
-  Twitter, 
-  Send, 
   Share2, 
   ArrowLeft, 
   User, 
   Calendar, 
   Tag,
-  Clock,
-  ChevronRight
+  Clock
 } from 'lucide-react'
 import SEO from '@/components/SEO'
 import AdSenseZone from '@/components/AdSenseZone'

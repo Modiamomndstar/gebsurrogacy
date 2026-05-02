@@ -7,6 +7,7 @@ import TermsOfService from './pages/TermsOfService'
 import Blog from './pages/Blog'
 import BlogPost from './pages/BlogPost'
 import BecomeASurrogate from './pages/BecomeASurrogate'
+import Contact from './pages/Contact'
 import CookieConsent from './components/CookieConsent'
 
 function App() {
@@ -20,6 +21,7 @@ function App() {
         <Route path="/blog" element={<Blog />} />
         <Route path="/blog/:id" element={<BlogPost />} />
         <Route path="/become-a-surrogate" element={<BecomeASurrogate />} />
+        <Route path="/contact" element={<Contact />} />
         <Route path="/privacy" element={<PrivacyPolicy />} />
         <Route path="/terms" element={<TermsOfService />} />
       </Routes>

@@ -216,8 +216,8 @@ export default function AdminDashboard() {
       content: formData.get('content'),
       category: formData.get('category'),
       author: formData.get('author'),
-      imageUrl: formData.get('imageUrl'),
-      publishedAt: formData.get('status') === 'published' ? new Date().toISOString() : null
+      image_url: formData.get('imageUrl'),
+      published_at: formData.get('status') === 'published' ? new Date().toISOString() : null
     }
     const token = localStorage.getItem('admin_token')
     const url = editingPost ? `/api/admin/blog-posts/${editingPost.id}` : '/api/admin/blog-posts'
@@ -617,7 +617,7 @@ export default function AdminDashboard() {
                             const token = localStorage.getItem('admin_token');
                             toast.info(`Repairing ${postsToFix.length} images...`);
                             for (const post of postsToFix) {
-                              const newUrl = `https://source.unsplash.com/1200x800/?${encodeURIComponent(post.category.toLowerCase() + ' baby family')}`;
+                              const newUrl = `https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?auto=format&fit=crop&q=80&w=1200&topic=${encodeURIComponent(post.category.toLowerCase())}`;
                               await fetch(`/api/admin/blog-posts/${post.id}`, {
                                 method: 'PUT',
                                 headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },

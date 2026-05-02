@@ -110,6 +110,10 @@ const BlogPost = () => {
     </div>
   )
 
+  const tableOfContents = post.content.match(/<h[23]>(.*?)<\/h[23]>/g)?.map((match: string) => {
+    return match.replace(/<[^>]*>/g, '');
+  }) || [];
+
   return (
     <div className="min-h-screen bg-[#fdfafb]">
       <SEO 
@@ -119,237 +123,191 @@ const BlogPost = () => {
         ogType="article"
       />
 
-      {/* Modern Hero Header */}
-      <div className="relative h-[70vh] min-h-[500px] w-full overflow-hidden">
-        <img src={post.image_url} alt={post.title} className="w-full h-full object-cover scale-105" />
-        <div className="absolute inset-0 bg-gradient-to-t from-[#1a1a1a] via-[#1a1a1a]/40 to-transparent" />
-        <div className="absolute inset-0 bg-black/20" />
-        
-        <div className="absolute bottom-0 left-0 right-0 p-8 md:p-20">
-          <div className="max-w-4xl mx-auto">
-            <Link to="/blog" className="inline-flex items-center gap-2 text-white/70 hover:text-white mb-8 transition-all group bg-white/10 backdrop-blur-md px-4 py-2 rounded-full border border-white/20">
-               <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
-               <span className="text-xs font-bold uppercase tracking-widest">Back to Insights</span>
-            </Link>
-            
-            <div className="flex gap-3 mb-6">
-               <span className="px-4 py-1.5 bg-[#f8a4b9] text-white text-[10px] font-bold rounded-full uppercase tracking-[0.2em] shadow-lg shadow-[#f8a4b9]/20">{post.category}</span>
-            </div>
-            
-            <h1 className="text-3xl md:text-6xl font-serif font-bold text-white leading-[1.1] mb-8 drop-shadow-sm">
-              {post.title}
-            </h1>
-            
-            <div className="flex flex-wrap items-center gap-8 text-white/80 text-xs font-medium tracking-wide">
-              <div className="flex items-center gap-3 bg-white/5 backdrop-blur-sm px-4 py-2 rounded-full border border-white/10">
-                <User className="w-4 h-4 text-[#f8a4b9]" /> 
-                <span>{post.author}</span>
-              </div>
-              <div className="flex items-center gap-3 bg-white/5 backdrop-blur-sm px-4 py-2 rounded-full border border-white/10">
-                <Calendar className="w-4 h-4 text-[#f8a4b9]" /> 
-                <span>{new Date(post.published_at).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</span>
-              </div>
-              <div className="flex items-center gap-3 bg-white/5 backdrop-blur-sm px-4 py-2 rounded-full border border-white/10">
-                <Clock className="w-4 h-4 text-[#f8a4b9]" /> 
-                <span>5 min read</span>
-              </div>
-            </div>
-          </div>
+      {/* Modern High-End Blog Header */}
+      <div className="pt-24 pb-12 bg-white border-b">
+        <div className="max-w-6xl mx-auto px-6">
+           <Link to="/blog" className="inline-flex items-center gap-2 text-gray-400 hover:text-[#f8a4b9] mb-8 transition-all group">
+             <ArrowLeft className="w-4 h-4" />
+             <span className="text-[10px] font-bold uppercase tracking-widest">Back to Insights</span>
+           </Link>
+
+           <div className="max-w-3xl">
+             <span className="px-4 py-1.5 bg-[#f8a4b9]/10 text-[#f8a4b9] text-[10px] font-bold rounded-full uppercase tracking-widest mb-6 inline-block">
+               {post.category}
+             </span>
+             
+             <h1 className="text-4xl md:text-6xl font-serif font-bold text-[#1a1a1a] leading-tight mb-8">
+               {post.title}
+             </h1>
+
+             <div className="flex flex-wrap items-center gap-6 text-gray-400 text-xs font-medium border-t pt-8">
+               <div className="flex items-center gap-2">
+                 <div className="w-8 h-8 rounded-full bg-pink-50 flex items-center justify-center">
+                    <User className="w-4 h-4 text-[#f8a4b9]" />
+                 </div>
+                 <span className="font-bold text-gray-900">{post.author || 'GEB Surrogacy Manager'}</span>
+               </div>
+               <div className="flex items-center gap-2">
+                 <Calendar className="w-4 h-4" />
+                 <span>{new Date(post.published_at || post.created_at).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</span>
+               </div>
+               <div className="flex items-center gap-2">
+                 <Clock className="w-4 h-4" />
+                 <span>5 min read</span>
+               </div>
+             </div>
+           </div>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 py-12 md:py-24 flex flex-col lg:flex-row gap-12 lg:gap-16">
-        {/* Main Content Area */}
-        <div className="flex-1 space-y-12">
-          <article className="bg-white rounded-[2.5rem] md:rounded-[3.5rem] p-8 md:p-20 shadow-xl shadow-gray-200/50 border border-[#f0e7ec] relative overflow-hidden">
-            <div className="absolute top-0 left-0 w-2 h-full bg-[#f8a4b9]/10" />
-            
-            {/* Top Ad Zone */}
-            <AdSenseZone slot="blog_top" className="mb-12 rounded-2xl overflow-hidden border border-gray-100" />
-
-            <div 
-              className="prose prose-sm md:prose-lg max-w-none 
-                prose-headings:text-[#2d2d2d] prose-headings:font-serif prose-headings:font-bold prose-headings:mt-16 prose-headings:mb-8
-                prose-h2:text-4xl md:prose-h2:text-5xl prose-h2:leading-tight
-                prose-h3:text-2xl md:prose-h3:text-3xl
-                prose-p:text-[#4a4a4a] prose-p:leading-[1.8] prose-p:mb-8 prose-p:text-lg
-                prose-strong:text-[#2d2d2d] prose-strong:font-bold
-                prose-ul:my-10 prose-li:mb-4 prose-li:text-lg
-                prose-a:text-[#f8a4b9] prose-a:font-bold prose-a:no-underline hover:prose-a:text-[#e88aa3] prose-a:border-b-2 prose-a:border-[#f8a4b9]/30 hover:prose-a:border-[#f8a4b9] prose-a:transition-all
-                prose-blockquote:border-l-4 prose-blockquote:border-[#f8a4b9] prose-blockquote:bg-[#fcfafb] prose-blockquote:p-8 prose-blockquote:rounded-r-3xl prose-blockquote:italic prose-blockquote:text-xl prose-blockquote:text-gray-700
-                prose-img:rounded-[2rem] prose-img:shadow-2xl prose-img:my-16"
-              dangerouslySetInnerHTML={{ __html: post.content }}
-            />
-
-            {/* Bottom Ad Zone */}
-            <AdSenseZone slot="blog_bottom" className="mt-16 rounded-2xl overflow-hidden border border-gray-100" />
-
-            {/* Interaction Bar */}
-            <div className="mt-20 pt-10 border-t border-gray-100 flex flex-col sm:flex-row justify-between items-center gap-6">
-              <div className="flex items-center gap-6">
-                <Button 
-                  variant="outline" 
-                  size="lg" 
-                  className="rounded-full gap-3 px-8 border-gray-200 hover:bg-[#f8a4b9] hover:text-white hover:border-[#f8a4b9] transition-all group" 
-                  onClick={handleShare}
-                >
-                  <Share2 className="w-5 h-5 group-hover:scale-110 transition-transform" /> 
-                  <span className="font-bold">Share Story</span>
-                </Button>
-                
-                <div className="flex gap-3">
-                  {[
-                    { icon: Facebook, url: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(window.location.href)}`, color: 'hover:bg-blue-50 hover:text-blue-600' },
-                    { icon: Twitter, url: `https://twitter.com/intent/tweet?url=${encodeURIComponent(window.location.href)}&text=${encodeURIComponent(post.title)}`, color: 'hover:bg-sky-50 hover:text-sky-500' },
-                    { icon: MessageCircle, url: `https://wa.me/?text=${encodeURIComponent(post.title + ' ' + window.location.href)}`, color: 'hover:bg-green-50 hover:text-green-500' }
-                  ].map((social, i) => (
-                    <a 
-                      key={i} 
-                      href={social.url} 
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                      className={`w-12 h-12 rounded-full border border-gray-100 flex items-center justify-center text-gray-400 transition-all ${social.color}`}
-                    >
-                      <social.icon className="w-5 h-5" />
-                    </a>
-                  ))}
-                </div>
-              </div>
-              
-              <div className="flex items-center gap-3 bg-gray-50 px-6 py-3 rounded-full border border-gray-100">
-                <Tag className="w-4 h-4 text-[#f8a4b9]" />
-                <span className="text-xs font-bold text-gray-500 uppercase tracking-widest">{post.category}</span>
-              </div>
-            </div>
-
-            {/* Creator Card */}
-            <div className="mt-16 p-10 bg-gradient-to-br from-[#fcfafb] to-white rounded-[2.5rem] border border-[#f0e7ec] flex flex-col md:flex-row items-center gap-8">
-              <div className="w-20 h-20 rounded-2xl bg-[#f8a4b9] flex items-center justify-center text-white text-3xl font-serif font-bold shadow-lg shadow-[#f8a4b9]/20">
-                GEB
-              </div>
-              <div className="flex-1 text-center md:text-left">
-                <h4 className="font-serif font-bold text-xl mb-2 text-[#2d2d2d]">GEB Surrogacy Editorial Team</h4>
-                <p className="text-gray-500 text-sm leading-relaxed">
-                  Dedicated to providing accurate, compassionate, and inspiring content for the surrogacy community worldwide.
-                </p>
-              </div>
-              <div className="flex gap-4">
-                <a href="https://instagram.com/geb_surrogacy_services" target="_blank" className="text-gray-400 hover:text-[#e4405f] transition-colors"><Instagram className="w-6 h-6" /></a>
-                <a href="https://facebook.com/share/192smxW7GG/" target="_blank" className="text-gray-400 hover:text-[#1877f2] transition-colors"><Facebook className="w-6 h-6" /></a>
-              </div>
-            </div>
-          </article>
-
-          {/* High-Impact Comments Section */}
-          <div className="bg-white rounded-[2.5rem] p-8 md:p-20 shadow-xl shadow-gray-200/50 border border-[#f0e7ec]">
-            <h3 className="text-3xl font-serif font-bold mb-12 flex items-center gap-4 text-[#2d2d2d]">
-              <MessageCircle className="w-8 h-8 text-[#f8a4b9]" />
-              Community Voices ({post.comments?.length || 0})
-            </h3>
-
-            {/* Enhanced Comment Form */}
-            <form onSubmit={handleCommentSubmit} className="space-y-6 mb-16">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <label className="text-xs font-bold text-gray-400 uppercase tracking-widest ml-2">Your Name</label>
-                  <Input 
-                    placeholder="Enter your name" 
-                    value={commentName} 
-                    onChange={(e) => setCommentName(e.target.value)}
-                    className="rounded-2xl h-14 bg-gray-50 border-transparent focus:bg-white focus:ring-2 focus:ring-[#f8a4b9]/20 transition-all text-lg"
-                    required
-                  />
-                </div>
-              </div>
-              <div className="space-y-2">
-                <label className="text-xs font-bold text-gray-400 uppercase tracking-widest ml-2">Share your thoughts</label>
-                <Textarea 
-                  placeholder="Join the discussion..." 
-                  value={commentText}
-                  onChange={(e) => setCommentText(e.target.value)}
-                  className="rounded-[2rem] min-h-[180px] bg-gray-50 border-transparent focus:bg-white focus:ring-2 focus:ring-[#f8a4b9]/20 transition-all text-lg p-6"
-                  required
+      <div className="max-w-6xl mx-auto px-6 py-12">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-16">
+          
+          {/* Main Content Column */}
+          <div className="lg:col-span-8">
+            {/* Featured Image Card */}
+            <div className="relative group mb-16">
+              <div className="absolute -inset-1 bg-gradient-to-r from-[#f8a4b9] to-[#fbcfe8] rounded-[2.5rem] blur opacity-10 group-hover:opacity-20 transition duration-1000" />
+              <div className="relative aspect-video rounded-[2.5rem] overflow-hidden shadow-2xl bg-gray-100">
+                <img 
+                  src={post.image_url} 
+                  alt={post.title} 
+                  className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" 
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?auto=format&fit=crop&q=80&w=1200';
+                  }}
                 />
               </div>
-              <Button type="submit" disabled={submitting} className="bg-[#f8a4b9] hover:bg-[#e88aa3] text-white px-10 h-14 rounded-2xl font-bold text-lg gap-3 shadow-lg shadow-[#f8a4b9]/20 transition-all hover:scale-[1.02]">
-                {submitting ? 'Sending...' : 'Post Comment'} <Send className="w-5 h-5" />
-              </Button>
-            </form>
+            </div>
 
-            {/* Sophisticated Comment List */}
-            <div className="space-y-10">
-              {post.comments?.map((comment: any) => (
-                <div key={comment._id} className="flex gap-6 group">
-                  <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#ffeef2] to-[#fff5f7] flex-shrink-0 flex items-center justify-center text-[#f8a4b9] text-xl font-bold border border-[#f8a4b9]/10 shadow-sm group-hover:scale-110 transition-transform">
-                    {comment.name[0]?.toUpperCase()}
-                  </div>
-                  <div className="flex-1">
-                    <div className="flex items-center gap-4 mb-3">
-                      <span className="font-bold text-lg text-gray-900">{comment.name}</span>
-                      <div className="w-1 h-1 rounded-full bg-gray-200" />
-                      <span className="text-[11px] text-gray-400 font-bold uppercase tracking-widest">{new Date(comment.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
-                    </div>
-                    <div className="relative">
-                      <div className="absolute -left-3 top-0 bottom-0 w-1 bg-gradient-to-b from-[#f8a4b9]/20 to-transparent rounded-full" />
-                      <p className="text-gray-600 leading-relaxed text-lg pl-3">
-                        {comment.content}
-                      </p>
-                    </div>
+            <article className="bg-white rounded-[2.5rem] p-8 md:p-16 shadow-sm border border-gray-100 relative overflow-hidden">
+              <div 
+                className="prose prose-sm md:prose-lg max-w-none 
+                  prose-headings:text-[#1a1a1a] prose-headings:font-serif prose-headings:font-bold prose-headings:mt-16 prose-headings:mb-8
+                  prose-h2:text-4xl prose-h2:border-b prose-h2:pb-4 prose-h2:border-gray-50
+                  prose-p:text-gray-600 prose-p:leading-[1.8] prose-p:mb-8 prose-p:text-lg
+                  prose-strong:text-gray-900 prose-strong:font-bold
+                  prose-ul:my-10 prose-li:mb-6 prose-li:text-lg prose-li:text-gray-600
+                  prose-a:text-[#f8a4b9] prose-a:font-bold prose-a:no-underline hover:underline
+                  prose-blockquote:border-l-4 prose-blockquote:border-[#f8a4b9] prose-blockquote:bg-pink-50/30 prose-blockquote:p-8 prose-blockquote:rounded-r-2xl prose-blockquote:italic
+                  prose-img:rounded-3xl prose-img:shadow-lg"
+                dangerouslySetInnerHTML={{ __html: post.content }}
+              />
+
+              {/* Interaction Bar */}
+              <div className="mt-20 pt-10 border-t flex flex-col sm:flex-row justify-between items-center gap-6">
+                <div className="flex items-center gap-4">
+                  <Button variant="ghost" className="rounded-full gap-2 text-gray-500 hover:text-[#f8a4b9]" onClick={handleShare}><Share2 className="w-4 h-4" /> Share</Button>
+                  <div className="flex gap-2">
+                    <a href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(window.location.href)}`} target="_blank" className="w-10 h-10 rounded-full border flex items-center justify-center text-gray-400 hover:text-[#1877f2] hover:bg-blue-50 transition-all"><Facebook className="w-4 h-4" /></a>
+                    <a href={`https://instagram.com/geb_surrogacy_services`} target="_blank" className="w-10 h-10 rounded-full border flex items-center justify-center text-gray-400 hover:text-[#e4405f] hover:bg-pink-50 transition-all"><Instagram className="w-4 h-4" /></a>
                   </div>
                 </div>
-              ))}
-              {(!post.comments || post.comments.length === 0) && (
-                <div className="text-center py-20 bg-[#fcfafb] rounded-[3rem] border-2 border-dashed border-[#f0e7ec]">
-                  <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center mx-auto mb-6 shadow-sm">
-                    <MessageCircle className="w-8 h-8 text-gray-300" />
-                  </div>
-                  <p className="text-gray-400 italic font-serif text-xl">Be the first to share your journey with us.</p>
+                <div className="flex items-center gap-3 px-4 py-2 bg-gray-50 rounded-full text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+                  <Tag className="w-3 h-3 text-[#f8a4b9]" /> {post.category}
                 </div>
-              )}
+              </div>
+            </article>
+
+            {/* Comments Section */}
+            <div className="mt-16 bg-white rounded-[2.5rem] p-8 md:p-16 border border-gray-100">
+               <h3 className="text-2xl font-serif font-bold mb-12 text-[#1a1a1a]">Community Voices</h3>
+               <form onSubmit={handleCommentSubmit} className="space-y-6 mb-16">
+                 <Input 
+                   placeholder="Your Name" 
+                   value={commentName} 
+                   onChange={(e) => setCommentName(e.target.value)}
+                   className="rounded-2xl h-14 bg-gray-50 border-none focus:ring-2 focus:ring-[#f8a4b9]/20"
+                 />
+                 <Textarea 
+                   placeholder="Share your thoughts..." 
+                   value={commentText}
+                   onChange={(e) => setCommentText(e.target.value)}
+                   className="rounded-[2rem] min-h-[150px] bg-gray-50 border-none focus:ring-2 focus:ring-[#f8a4b9]/20 p-6"
+                 />
+                 <Button type="submit" disabled={submitting} className="bg-[#f8a4b9] text-white px-10 h-14 rounded-2xl font-bold">
+                   {submitting ? 'Posting...' : 'Post Comment'}
+                 </Button>
+               </form>
+
+               <div className="space-y-8">
+                 {post.comments?.map((comment: any) => (
+                   <div key={comment._id} className="flex gap-4">
+                     <div className="w-12 h-12 rounded-2xl bg-pink-50 text-[#f8a4b9] flex items-center justify-center font-bold">{comment.name[0]}</div>
+                     <div>
+                       <div className="flex items-center gap-2 mb-1">
+                         <span className="font-bold text-gray-900">{comment.name}</span>
+                         <span className="text-[10px] text-gray-400">{new Date(comment.created_at).toLocaleDateString()}</span>
+                       </div>
+                       <p className="text-gray-600">{comment.content}</p>
+                     </div>
+                   </div>
+                 ))}
+               </div>
+            </div>
+          </div>
+
+          {/* Sidebar Column */}
+          <div className="lg:col-span-4 space-y-12">
+            {/* CTA Mirrored from Screenshot */}
+            <div className="bg-[#2d2d2d] rounded-[2.5rem] p-10 text-white shadow-2xl relative overflow-hidden">
+               <div className="absolute top-0 right-0 w-32 h-32 bg-[#f8a4b9]/10 rounded-full blur-3xl" />
+               <h3 className="text-2xl font-serif font-bold mb-4">Start Your Miracle Today</h3>
+               <p className="text-gray-400 text-sm leading-relaxed mb-8">We guide you through every step of your parenthood journey with expertise and compassion.</p>
+               <Link to="/#consultation">
+                 <Button className="w-full bg-[#f8a4b9] hover:bg-white hover:text-[#f8a4b9] h-14 rounded-2xl font-bold text-lg transition-all">
+                   Book Free Consultation
+                 </Button>
+               </Link>
+            </div>
+
+            {/* Social Connect */}
+            <div className="bg-white rounded-[2.5rem] p-8 border border-gray-100">
+               <h4 className="font-serif font-bold mb-6">Connect With Us</h4>
+               <div className="grid grid-cols-2 gap-4">
+                 <a href="https://facebook.com/share/192smxW7GG/" target="_blank" className="p-6 bg-gray-50 rounded-2xl flex flex-col items-center gap-2 hover:bg-blue-50 transition-colors">
+                   <Facebook className="text-[#1877f2] w-6 h-6" />
+                   <span className="text-[10px] font-bold uppercase tracking-widest text-gray-500">Facebook</span>
+                 </a>
+                 <a href="https://instagram.com/geb_surrogacy_services" target="_blank" className="p-6 bg-gray-50 rounded-2xl flex flex-col items-center gap-2 hover:bg-pink-50 transition-colors">
+                   <Instagram className="text-[#e4405f] w-6 h-6" />
+                   <span className="text-[10px] font-bold uppercase tracking-widest text-gray-500">Instagram</span>
+                 </a>
+               </div>
+            </div>
+
+            {/* Table of Contents - Dynamically Generated */}
+            {tableOfContents.length > 0 && (
+              <div className="bg-white rounded-[2.5rem] p-8 border border-gray-100">
+                <h4 className="font-serif font-bold mb-6">Table of Contents</h4>
+                <nav className="space-y-4">
+                  {tableOfContents.map((item: string, idx: number) => (
+                    <div key={idx} className="flex gap-4 group cursor-pointer">
+                      <span className="text-xs font-bold text-gray-300 group-hover:text-[#f8a4b9]">{idx + 1}.</span>
+                      <span className="text-sm text-gray-500 group-hover:text-gray-900 transition-colors">{item}</span>
+                    </div>
+                  ))}
+                </nav>
+              </div>
+            )}
+
+            {/* Guidance Block */}
+            <div className="bg-[#fdfafb] rounded-[2.5rem] p-8 border border-[#f8a4b9]/10 text-center">
+              <div className="w-12 h-12 rounded-full bg-[#f8a4b9]/10 flex items-center justify-center mx-auto mb-6">
+                <MessageCircle className="w-6 h-6 text-[#f8a4b9]" />
+              </div>
+              <h4 className="font-serif font-bold mb-2">Need Personalized Guidance?</h4>
+              <p className="text-gray-500 text-xs leading-relaxed mb-6">Our experienced team is here to answer your questions and guide you through every step.</p>
+              <Button variant="outline" className="w-full border-[#f8a4b9] text-[#f8a4b9] hover:bg-[#f8a4b9] hover:text-white rounded-2xl font-bold h-12">
+                Get Expert Help
+              </Button>
+            </div>
+
+            <div className="sticky top-24">
+              <AdSenseZone slot="blog_sidebar_sticky" format="auto" className="rounded-3xl overflow-hidden shadow-sm" />
             </div>
           </div>
         </div>
-
-        {/* Premium Sidebar */}
-        <aside className="w-full lg:w-[400px] space-y-12">
-          {/* Sidebar Ad */}
-          <AdSenseZone slot="blog_sidebar" format="rectangle" className="rounded-3xl overflow-hidden border border-gray-100 shadow-sm" />
-
-          {/* CTA Card */}
-          <div className="bg-[#2d2d2d] rounded-[3rem] p-10 text-white relative overflow-hidden shadow-2xl">
-            <div className="absolute -top-12 -right-12 w-40 h-40 bg-[#f8a4b9]/10 rounded-full blur-3xl" />
-            <div className="absolute -bottom-12 -left-12 w-40 h-40 bg-white/5 rounded-full blur-3xl" />
-            
-            <h3 className="font-serif font-bold text-3xl mb-6 relative z-10">Start Your Miracle Today</h3>
-            <p className="text-gray-400 leading-relaxed mb-10 text-lg relative z-10">
-              We guide you through every step of your parenthood journey with expertise and compassion.
-            </p>
-            <Link to="/#consultation">
-              <Button className="w-full bg-[#f8a4b9] hover:bg-white hover:text-[#f8a4b9] text-white py-8 rounded-[1.5rem] font-bold text-lg transition-all group shadow-xl shadow-[#f8a4b9]/20 relative z-10">
-                Book Free Consultation <ChevronRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
-              </Button>
-            </Link>
-          </div>
-
-          {/* Social Proof Sidebar */}
-          <div className="bg-white rounded-[3rem] p-10 border border-[#f0e7ec] shadow-sm">
-            <h4 className="font-serif font-bold text-xl mb-8">Connect With Us</h4>
-            <div className="grid grid-cols-2 gap-4">
-              <a href="https://facebook.com/share/192smxW7GG/" target="_blank" className="flex flex-col items-center justify-center p-6 bg-[#fcfafb] rounded-3xl border border-transparent hover:border-[#1877f2]/20 hover:bg-blue-50 transition-all group">
-                <Facebook className="w-8 h-8 text-[#1877f2] mb-3 group-hover:scale-110 transition-transform" />
-                <span className="text-[10px] font-bold uppercase tracking-widest text-gray-500">Facebook</span>
-              </a>
-              <a href="https://instagram.com/geb_surrogacy_services" target="_blank" className="flex flex-col items-center justify-center p-6 bg-[#fcfafb] rounded-3xl border border-transparent hover:border-[#e4405f]/20 hover:bg-pink-50 transition-all group">
-                <Instagram className="w-6 h-6 text-[#e4405f] mb-3 group-hover:scale-110 transition-transform" />
-                <span className="text-[10px] font-bold uppercase tracking-widest text-gray-500">Instagram</span>
-              </a>
-            </div>
-          </div>
-
-          <div className="sticky top-24">
-            <AdSenseZone slot="blog_sidebar_sticky" format="auto" className="rounded-3xl overflow-hidden" />
-          </div>
-        </aside>
       </div>
     </div>
   )

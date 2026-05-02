@@ -20,7 +20,10 @@ import {
   Clock,
   Eye,
   EyeOff,
-  Globe
+  Globe,
+  Mail,
+  Baby,
+  LineChart
 } from 'lucide-react'
 import { 
   Dialog, 
@@ -33,6 +36,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { toast } from 'sonner'
+import { MessageCircle } from 'lucide-react'
 import '../App.css'
 
 // Types
@@ -110,9 +114,10 @@ export default function AdminDashboard() {
     
     if (token && savedUser) {
       try {
-        setUser(JSON.parse(savedUser))
+        const parsedUser = JSON.parse(savedUser);
+        setUser(parsedUser)
         setIsAuthenticated(true)
-        fetchDashboardData(token)
+        fetchDashboardData(token, parsedUser)
       } catch (e) {
         localStorage.removeItem('admin_token')
         localStorage.removeItem('admin_user')
@@ -121,7 +126,7 @@ export default function AdminDashboard() {
     setIsLoading(false)
   }, [])
 
-  const fetchDashboardData = async (token: string) => {
+  const fetchDashboardData = async (token: string, currentUser?: AdminUser) => {
     try {
       const [summaryRes, consultationsRes, blogRes, testimoniesRes, servicesRes, settingsRes, aiLogsRes] = await Promise.all([
         fetch('/api/admin/summary', { headers: { 'Authorization': `Bearer ${token}` } }),
@@ -145,19 +150,17 @@ export default function AdminDashboard() {
       if (settingsRes.ok) setSiteSettings((await settingsRes.json()).settings || {})
       if (aiLogsRes.ok) setAiLogs((await aiLogsRes.json()).logs || [])
       
-      // Fetch new collections
-      const [subRes, appsRes] = await Promise.all([
+      const [subRes, appsRes, commentsRes] = await Promise.all([
         fetch('/api/admin/newsletter', { headers: { 'Authorization': `Bearer ${token}` } }),
-        fetch('/api/admin/surrogate-apps', { headers: { 'Authorization': `Bearer ${token}` } })
+        fetch('/api/admin/surrogate-apps', { headers: { 'Authorization': `Bearer ${token}` } }),
+        fetch('/api/admin/comments', { headers: { 'Authorization': `Bearer ${token}` } })
       ]);
       if (subRes.ok) setNewsletterSubscribers((await subRes.json()).subscribers || []);
       if (appsRes.ok) setSurrogateApps((await appsRes.json()).apps || []);
-      
-      const commentsRes = await fetch('/api/admin/comments', { headers: { 'Authorization': `Bearer ${token}` } });
       if (commentsRes.ok) setComments((await commentsRes.json()).comments || []);
       
-      // Fetch admin users for superadmin
-      if (user?.role === 'superadmin') {
+      const activeUser = currentUser || user;
+      if (activeUser?.role === 'superadmin') {
         const usersRes = await fetch('/api/admin/users', { headers: { 'Authorization': `Bearer ${token}` } })
         if (usersRes.ok) setAdminUsers((await usersRes.json()).users || [])
       }
@@ -171,38 +174,25 @@ export default function AdminDashboard() {
     e.preventDefault()
     setIsLoading(true)
     try {
-      console.log('Attempting login for:', email)
       const response = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password })
       })
       
-      console.log('Response status:', response.status)
-      const text = await response.text()
-      console.log('Response text (first 100 chars):', text.substring(0, 100))
-      
-      let data
-      try {
-        data = JSON.parse(text)
-      } catch (e) {
-        console.error('Failed to parse JSON response')
-        toast.error('Server returned invalid data format')
-        return
-      }
+      const data = await response.json()
 
       if (response.ok && data.success) {
         localStorage.setItem('admin_token', data.token)
         localStorage.setItem('admin_user', JSON.stringify(data.user))
         setUser(data.user)
         setIsAuthenticated(true)
-        fetchDashboardData(data.token)
+        fetchDashboardData(data.token, data.user)
         toast.success('Welcome back, ' + data.user.username)
       } else {
         toast.error(data.error || 'Invalid credentials')
       }
     } catch (error) { 
-      console.error('Login fetch error:', error)
       toast.error('Connection error') 
     } finally { 
       setIsLoading(false) 
@@ -413,16 +403,26 @@ export default function AdminDashboard() {
         <nav className="flex-1 px-4 py-4 space-y-1">
           {menuItems.map((item) => {
             if (item.superadminOnly && user?.role !== 'superadmin') return null;
-            const Icon = item.icon; const isActive = activeTab === item.id
+            const Icon = item.icon; 
+            const isActive = activeTab === item.id;
             return (
-              <button key={item.id} onClick={() => setActiveTab(item.id)} className={`w-full flex items-center gap-4 px-4 py-3 rounded-xl transition-all ${isActive ? 'bg-[#f8a4b9]/10 text-[#f8a4b9]' : 'text-gray-500 hover:bg-gray-50'}`}>
+              <button 
+                key={item.id} 
+                onClick={() => setActiveTab(item.id)} 
+                className={`w-full flex items-center gap-4 px-4 py-3 rounded-xl transition-all ${isActive ? 'bg-[#f8a4b9]/10 text-[#f8a4b9]' : 'text-gray-500 hover:bg-gray-50'}`}
+              >
                 <Icon className={`w-5 h-5 ${isActive ? 'text-[#f8a4b9]' : 'text-gray-400'}`} />
                 {isSidebarOpen && <span className="font-medium text-sm">{item.label}</span>}
               </button>
             )
           })}
         </nav>
-        <div className="p-4 border-t"><button onClick={handleLogout} className="w-full flex items-center gap-4 px-4 py-3 rounded-xl text-red-500 hover:bg-red-50"><LogOut className="w-5 h-5" />{isSidebarOpen && <span className="font-medium text-sm">Logout</span>}</button></div>
+        <div className="p-4 border-t">
+          <button onClick={handleLogout} className="w-full flex items-center gap-4 px-4 py-3 rounded-xl text-red-500 hover:bg-red-50">
+            <LogOut className="w-5 h-5" />
+            {isSidebarOpen && <span className="font-medium text-sm">Logout</span>}
+          </button>
+        </div>
       </aside>
 
       <main className={`flex-1 transition-all duration-300 ${isSidebarOpen ? 'ml-64' : 'ml-20'}`}>
@@ -437,7 +437,7 @@ export default function AdminDashboard() {
           </div>
         </header>
 
-        <div className="p-8">
+        <div className="p-8 overflow-y-auto flex-1">
           {activeTab === 'overview' && (
             <div className="space-y-8">
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -466,20 +466,32 @@ export default function AdminDashboard() {
                     {analytics.length === 0 && <p className="text-center py-8 text-gray-400 italic">No traffic data yet</p>}
                   </div>
                 </div>
-              <div className="bg-white rounded-2xl border p-6">
-                <h3 className="font-bold mb-4">Recent Consultations</h3>
-                <table className="w-full text-left">
-                  <thead><tr className="text-xs text-gray-500 uppercase"><th>Name</th><th>Date</th><th>Status</th></tr></thead>
-                  <tbody>
-                    {recentConsultations.map((c, i) => (
-                      <tr key={i} className="border-t text-sm">
-                        <td className="py-3">{c.first_name} {c.last_name}</td>
-                        <td>{new Date(c.created_at).toLocaleDateString()}</td>
-                        <td><span className={`px-2 py-1 rounded-full text-[10px] font-bold uppercase ${c.status === 'pending' ? 'bg-amber-50 text-amber-600' : 'bg-green-50 text-green-600'}`}>{c.status}</span></td>
+
+                <div className="bg-white rounded-2xl border p-6">
+                  <h3 className="font-bold mb-4">Recent Consultations</h3>
+                  <table className="w-full text-left">
+                    <thead>
+                      <tr className="text-xs text-gray-500 uppercase">
+                        <th>Name</th>
+                        <th>Date</th>
+                        <th>Status</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody>
+                      {recentConsultations.map((c, i) => (
+                        <tr key={i} className="border-t text-sm">
+                          <td className="py-3">{c.first_name} {c.last_name}</td>
+                          <td>{new Date(c.created_at).toLocaleDateString()}</td>
+                          <td>
+                            <span className={`px-2 py-1 rounded-full text-[10px] font-bold uppercase ${c.status === 'pending' ? 'bg-amber-50 text-amber-600' : 'bg-green-50 text-green-600'}`}>
+                              {c.status}
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             </div>
           )}
@@ -488,16 +500,29 @@ export default function AdminDashboard() {
             <div className="bg-white rounded-2xl border overflow-hidden">
               <div className="p-6 border-b flex justify-between items-center">
                 <h3 className="font-bold">Blog Management ({blogPosts.length})</h3>
-                <Button className="bg-[#f8a4b9]" onClick={() => { setEditingPost(null); setIsBlogModalOpen(true); }}><Plus className="w-4 h-4 mr-2" /> New Post</Button>
+                <Button className="bg-[#f8a4b9]" onClick={() => { setEditingPost(null); setIsBlogModalOpen(true); }}>
+                  <Plus className="w-4 h-4 mr-2" /> New Post
+                </Button>
               </div>
               <table className="w-full text-left">
-                <thead><tr className="bg-gray-50 text-xs text-gray-500 uppercase"><th className="px-6 py-3">Title</th><th className="px-6 py-3">Category</th><th className="px-6 py-3">Status</th><th className="px-6 py-3 text-right">Actions</th></tr></thead>
+                <thead>
+                  <tr className="bg-gray-50 text-xs text-gray-500 uppercase">
+                    <th className="px-6 py-3">Title</th>
+                    <th className="px-6 py-3">Category</th>
+                    <th className="px-6 py-3">Status</th>
+                    <th className="px-6 py-3 text-right">Actions</th>
+                  </tr>
+                </thead>
                 <tbody className="divide-y">
                   {blogPosts.map(p => (
                     <tr key={p.id} className="text-sm">
                       <td className="px-6 py-4 truncate max-w-xs">{p.title}</td>
                       <td className="px-6 py-4"><span className="px-2 py-1 bg-gray-100 rounded text-[10px] font-bold">{p.category}</span></td>
-                      <td className="px-6 py-4"><span className={`px-2 py-1 rounded-full text-[10px] font-bold uppercase ${p.published_at ? 'bg-green-50 text-green-600' : 'bg-amber-50 text-amber-600'}`}>{p.published_at ? 'Published' : 'Draft'}</span></td>
+                      <td className="px-6 py-4">
+                        <span className={`px-2 py-1 rounded-full text-[10px] font-bold uppercase ${p.published_at ? 'bg-green-50 text-green-600' : 'bg-amber-50 text-amber-600'}`}>
+                          {p.published_at ? 'Published' : 'Draft'}
+                        </span>
+                      </td>
                       <td className="px-6 py-4 text-right">
                         <Button variant="ghost" size="sm" onClick={() => { setEditingPost(p); setIsBlogModalOpen(true); }}><Edit className="w-4 h-4" /></Button>
                         <Button variant="ghost" size="sm" className="text-red-500" onClick={async () => { if(confirm('Delete?')) { const token = localStorage.getItem('admin_token'); await fetch(`/api/admin/blog-posts/${p.id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } }); fetchDashboardData(token!); } }}><Trash2 className="w-4 h-4" /></Button>
@@ -586,16 +611,29 @@ export default function AdminDashboard() {
             <div className="bg-white rounded-2xl border overflow-hidden">
               <div className="p-6 border-b flex justify-between items-center">
                 <h3 className="font-bold">Testimonials ({testimonies.length})</h3>
-                <Button className="bg-[#f8a4b9]" onClick={() => { setEditingTestimony(null); setIsTestimonyModalOpen(true); }}><Plus className="w-4 h-4 mr-2" /> Add Testimony</Button>
+                <Button className="bg-[#f8a4b9]" onClick={() => { setEditingTestimony(null); setIsTestimonyModalOpen(true); }}>
+                  <Plus className="w-4 h-4 mr-2" /> Add Testimony
+                </Button>
               </div>
               <table className="w-full text-left">
-                <thead><tr className="bg-gray-50 text-xs text-gray-500 uppercase"><th className="px-6 py-3">Name</th><th className="px-6 py-3">Location</th><th className="px-6 py-3">Status</th><th className="px-6 py-3 text-right">Actions</th></tr></thead>
+                <thead>
+                  <tr className="bg-gray-50 text-xs text-gray-500 uppercase">
+                    <th className="px-6 py-3">Name</th>
+                    <th className="px-6 py-3">Location</th>
+                    <th className="px-6 py-3">Status</th>
+                    <th className="px-6 py-3 text-right">Actions</th>
+                  </tr>
+                </thead>
                 <tbody className="divide-y">
                   {testimonies.map(t => (
                     <tr key={t.id} className="text-sm">
                       <td className="px-6 py-4">{t.name}</td>
                       <td className="px-6 py-4">{t.location}</td>
-                      <td className="px-6 py-4"><span className={`px-2 py-1 rounded-full text-[10px] font-bold uppercase ${t.active ? 'bg-green-50 text-green-600' : 'bg-gray-50 text-gray-400'}`}>{t.active ? 'Active' : 'Hidden'}</span></td>
+                      <td className="px-6 py-4">
+                        <span className={`px-2 py-1 rounded-full text-[10px] font-bold uppercase ${t.active ? 'bg-green-50 text-green-600' : 'bg-gray-50 text-gray-400'}`}>
+                          {t.active ? 'Active' : 'Hidden'}
+                        </span>
+                      </td>
                       <td className="px-6 py-4 text-right">
                         <Button variant="ghost" size="sm" onClick={() => { setEditingTestimony(t); setIsTestimonyModalOpen(true); }}><Edit className="w-4 h-4" /></Button>
                         <Button variant="ghost" size="sm" className="text-red-500" onClick={async () => { if(confirm('Delete?')) { const token = localStorage.getItem('admin_token'); await fetch(`/api/admin/testimonies/${t.id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } }); fetchDashboardData(token!); } }}><Trash2 className="w-4 h-4" /></Button>
@@ -611,16 +649,29 @@ export default function AdminDashboard() {
             <div className="bg-white rounded-2xl border overflow-hidden">
               <div className="p-6 border-b flex justify-between items-center">
                 <h3 className="font-bold">Agency Services ({services.length})</h3>
-                <Button className="bg-[#f8a4b9]" onClick={() => { setEditingService(null); setIsServiceModalOpen(true); }}><Plus className="w-4 h-4 mr-2" /> Add Service</Button>
+                <Button className="bg-[#f8a4b9]" onClick={() => { setEditingService(null); setIsServiceModalOpen(true); }}>
+                  <Plus className="w-4 h-4 mr-2" /> Add Service
+                </Button>
               </div>
               <table className="w-full text-left">
-                <thead><tr className="bg-gray-50 text-xs text-gray-500 uppercase"><th className="px-6 py-3">Title</th><th className="px-6 py-3">Icon</th><th className="px-6 py-3">Status</th><th className="px-6 py-3 text-right">Actions</th></tr></thead>
+                <thead>
+                  <tr className="bg-gray-50 text-xs text-gray-500 uppercase">
+                    <th className="px-6 py-3">Title</th>
+                    <th className="px-6 py-3">Icon</th>
+                    <th className="px-6 py-3">Status</th>
+                    <th className="px-6 py-3 text-right">Actions</th>
+                  </tr>
+                </thead>
                 <tbody className="divide-y">
                   {services.map(s => (
                     <tr key={s.id} className="text-sm">
                       <td className="px-6 py-4 font-bold">{s.title}</td>
                       <td className="px-6 py-4">{s.icon}</td>
-                      <td className="px-6 py-4"><span className={`px-2 py-1 rounded-full text-[10px] font-bold uppercase ${s.active ? 'bg-green-50 text-green-600' : 'bg-gray-50 text-gray-400'}`}>{s.active ? 'Active' : 'Hidden'}</span></td>
+                      <td className="px-6 py-4">
+                        <span className={`px-2 py-1 rounded-full text-[10px] font-bold uppercase ${s.active ? 'bg-green-50 text-green-600' : 'bg-gray-50 text-gray-400'}`}>
+                          {s.active ? 'Active' : 'Hidden'}
+                        </span>
+                      </td>
                       <td className="px-6 py-4 text-right">
                         <Button variant="ghost" size="sm" onClick={() => { setEditingService(s); setIsServiceModalOpen(true); }}><Edit className="w-4 h-4" /></Button>
                         <Button variant="ghost" size="sm" className="text-red-500" onClick={async () => { if(confirm('Delete?')) { const token = localStorage.getItem('admin_token'); await fetch(`/api/admin/services/${s.id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } }); fetchDashboardData(token!); } }}><Trash2 className="w-4 h-4" /></Button>
@@ -651,12 +702,29 @@ export default function AdminDashboard() {
                 <tbody className="divide-y">
                   {recentConsultations.map(c => (
                     <tr key={c.id} className="text-sm">
-                      <td className="px-6 py-4"><div>{c.first_name} {c.last_name}</div><div className="text-xs text-gray-500">{c.email} | {c.phone}</div></td>
+                      <td className="px-6 py-4">
+                        <div className="font-bold">{c.first_name} {c.last_name}</div>
+                        <div className="text-xs text-gray-500">{c.email} | {c.phone}</div>
+                      </td>
                       <td className="px-6 py-4 text-xs">{new Date(c.created_at).toLocaleDateString()}</td>
                       <td className="px-6 py-4 text-xs">{c.location}</td>
                       <td className="px-6 py-4">
-                        <select defaultValue={c.status} onChange={async (e) => { const token = localStorage.getItem('admin_token'); await fetch(`/api/consultations/${c.id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, body: JSON.stringify({ status: e.target.value }) }); fetchDashboardData(token!); }} className="text-[10px] font-bold uppercase p-1 rounded border">
-                          <option value="pending">Pending</option><option value="confirmed">Confirmed</option><option value="completed">Completed</option>
+                        <select 
+                          defaultValue={c.status} 
+                          onChange={async (e) => { 
+                            const token = localStorage.getItem('admin_token'); 
+                            await fetch(`/api/consultations/${c.id}`, { 
+                              method: 'PUT', 
+                              headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, 
+                              body: JSON.stringify({ status: e.target.value }) 
+                            }); 
+                            fetchDashboardData(token!); 
+                          }} 
+                          className="text-[10px] font-bold uppercase p-1 rounded border"
+                        >
+                          <option value="pending">Pending</option>
+                          <option value="confirmed">Confirmed</option>
+                          <option value="completed">Completed</option>
                         </select>
                       </td>
                       <td className="px-6 py-4 text-right flex justify-end gap-2">
@@ -669,6 +737,7 @@ export default function AdminDashboard() {
               </table>
             </div>
           )}
+
           {activeTab === 'surrogates' && (
             <div className="bg-white rounded-2xl border overflow-hidden">
               <div className="p-6 border-b flex justify-between items-center">
@@ -736,6 +805,7 @@ export default function AdminDashboard() {
               </table>
             </div>
           )}
+
           {activeTab === 'comments' && (
             <div className="bg-white rounded-2xl border overflow-hidden">
               <div className="p-6 border-b">
@@ -746,7 +816,6 @@ export default function AdminDashboard() {
                   <tr className="bg-gray-50 text-xs text-gray-500 uppercase">
                     <th className="px-6 py-3">User</th>
                     <th className="px-6 py-3">Comment</th>
-                    <th className="px-6 py-3">Post ID</th>
                     <th className="px-6 py-3 text-right">Actions</th>
                   </tr>
                 </thead>
@@ -758,9 +827,24 @@ export default function AdminDashboard() {
                         <div className="text-xs text-gray-400">{new Date(c.created_at).toLocaleString()}</div>
                       </td>
                       <td className="px-6 py-4 max-w-md truncate">{c.content}</td>
-                      <td className="px-6 py-4 text-xs font-mono">{c.post_id}</td>
                       <td className="px-6 py-4 text-right">
-                        <Button variant="ghost" size="sm" className="text-red-500" onClick={async () => { if(confirm('Delete comment?')) { const token = localStorage.getItem('admin_token'); await fetch(`/api/admin/comments/${c._id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } }); fetchDashboardData(token!); } }}><Trash2 className="w-4 h-4" /></Button>
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className="text-red-500" 
+                          onClick={async () => { 
+                            if(confirm('Delete comment?')) { 
+                              const token = localStorage.getItem('admin_token'); 
+                              await fetch(`/api/admin/comments/${c._id}`, { 
+                                method: 'DELETE', 
+                                headers: { 'Authorization': `Bearer ${token}` } 
+                              }); 
+                              fetchDashboardData(token!); 
+                            } 
+                          }}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
                       </td>
                     </tr>
                   ))}
@@ -776,7 +860,13 @@ export default function AdminDashboard() {
                 <Button className="bg-[#f8a4b9]" onClick={() => { setIsUserModalOpen(true); }}><Plus className="w-4 h-4 mr-2" /> Add User</Button>
               </div>
               <table className="w-full text-left">
-                <thead><tr className="bg-gray-50 text-xs text-gray-500 uppercase"><th className="px-6 py-3">User</th><th className="px-6 py-3">Role</th><th className="px-6 py-3 text-right">Actions</th></tr></thead>
+                <thead>
+                  <tr className="bg-gray-50 text-xs text-gray-500 uppercase">
+                    <th className="px-6 py-3">User</th>
+                    <th className="px-6 py-3">Role</th>
+                    <th className="px-6 py-3 text-right">Actions</th>
+                  </tr>
+                </thead>
                 <tbody className="divide-y">
                   {adminUsers.map(u => (
                     <tr key={u.id} className="text-sm">
@@ -834,7 +924,7 @@ export default function AdminDashboard() {
               <div>
                 <label className="text-xs font-bold uppercase text-gray-500 mb-1 block">Category</label>
                 <select name="category" defaultValue={editingPost?.category || 'Surrogacy'} className="w-full h-10 px-3 rounded border text-sm">
-                  {['Surrogacy', 'Parenthood', 'IVF', 'Egg Donation', 'Legal', 'Health'].map(c => (
+                  {['Surrogacy', 'Parenthood', 'IVF', 'Egg Donation', 'Legal', 'Health', 'Fictional Story'].map(c => (
                     <option key={c} value={c}>{c}</option>
                   ))}
                 </select>
@@ -886,6 +976,7 @@ export default function AdminDashboard() {
           </form>
         </DialogContent>
       </Dialog>
+
       <Dialog open={isUserModalOpen} onOpenChange={setIsUserModalOpen}>
         <DialogContent>
           <DialogHeader><DialogTitle>Add New Admin</DialogTitle></DialogHeader>

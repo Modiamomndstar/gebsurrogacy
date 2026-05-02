@@ -134,10 +134,27 @@ const BlogPost = () => {
           <AdSenseZone slot="blog_bottom" className="mt-12" />
 
           <div className="mt-16 pt-8 border-t border-gray-100 flex justify-between items-center">
-            <div className="flex gap-4">
+            <div className="flex flex-wrap gap-4">
               <Button variant="outline" size="sm" className="rounded-full gap-2" onClick={handleShare}>
                 <Share2 className="w-4 h-4" /> Share
               </Button>
+              <div className="flex gap-2">
+                {[
+                  { icon: Facebook, url: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(window.location.href)}`, color: 'text-blue-600' },
+                  { icon: Twitter, url: `https://twitter.com/intent/tweet?url=${encodeURIComponent(window.location.href)}&text=${encodeURIComponent(post.title)}`, color: 'text-sky-500' },
+                  { icon: MessageCircle, url: `https://wa.me/?text=${encodeURIComponent(post.title + ' ' + window.location.href)}`, color: 'text-green-500' }
+                ].map((social, i) => (
+                  <a 
+                    key={i} 
+                    href={social.url} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className={`w-8 h-8 rounded-full border flex items-center justify-center hover:bg-gray-50 transition-colors ${social.color}`}
+                  >
+                    <social.icon className="w-4 h-4" />
+                  </a>
+                ))}
+              </div>
             </div>
             <div className="flex items-center gap-2 text-gray-400 text-xs">
               <Tag className="w-3 h-3" />

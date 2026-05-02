@@ -1,13 +1,13 @@
 import { useEffect, useRef, useState } from 'react'
 import { gsap } from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
-import { 
-  Heart, 
-  Baby, 
-  Users, 
-  Mail, 
-  MapPin, 
-  Calendar, 
+import {
+  Heart,
+  Baby,
+  Users,
+  Mail,
+  MapPin,
+  Calendar,
   ArrowRight,
   CheckCircle,
   Menu,
@@ -136,22 +136,31 @@ function Home() {
           fetch('/api/testimonies'),
           fetch('/api/settings')
         ]);
-        
-        if (blogRes.ok) setBlogPosts((await blogRes.json()).posts || []);
+
+        if (blogRes.ok) {
+          const data = await blogRes.json();
+          setBlogPosts(data.posts || []);
+        }
         if (servicesRes.ok) {
           const data = await servicesRes.json();
           setServices(data.services || []);
           if (data.services?.length > 0) setActiveService(0);
         }
-        if (testimoniesRes.ok) setTestimonials((await testimoniesRes.json()).testimonies || []);
-        if (settingsRes.ok) setSiteSettings((await settingsRes.json()).settings || {});
+        if (testimoniesRes.ok) {
+          const data = await testimoniesRes.json();
+          setTestimonials(data.testimonies || []);
+        }
+        if (settingsRes.ok) {
+          const data = await settingsRes.json();
+          setSiteSettings(data.settings || {});
+        }
       } catch (err) {
         console.error('Fetch error:', err);
       }
     };
     fetchContent();
   }, [])
-  
+
   const heroRef = useRef<HTMLDivElement>(null)
   const aboutRef = useRef<HTMLDivElement>(null)
   const servicesRef = useRef<HTMLDivElement>(null)
@@ -177,7 +186,7 @@ function Home() {
         ease: 'power3.out',
         delay: 0.2
       })
-      
+
       gsap.from('.hero-subtitle', {
         y: 50,
         opacity: 0,
@@ -185,7 +194,7 @@ function Home() {
         ease: 'power3.out',
         delay: 0.5
       })
-      
+
       gsap.from('.hero-cta', {
         y: 30,
         opacity: 0,
@@ -193,7 +202,7 @@ function Home() {
         ease: 'power3.out',
         delay: 0.8
       })
-      
+
       gsap.from('.hero-stat', {
         y: 40,
         opacity: 0,
@@ -261,7 +270,7 @@ function Home() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data)
       })
-      
+
       if (res.ok) {
         toast.success('Consultation request submitted! We will contact you soon.')
         setIsConsultDialogOpen(false)
@@ -280,12 +289,12 @@ function Home() {
 
   return (
     <div className="min-h-screen bg-white">
-      <SEO 
+      <SEO
         title="Global Surrogacy & IVF Services | Nigeria, UK, USA"
         description="GEB Surrogacy Services provides compassionate, professional gestational surrogacy and IVF coordination in Nigeria, UK, and USA. Start your journey to parenthood today."
         keywords="surrogacy nigeria, ivf nigeria, surrogacy uk, surrogacy usa, international surrogacy agency, infertility treatment, egg donation, parenthood journey"
       />
-      
+
       {/* Structured Data */}
       <script type="application/ld+json">
         {JSON.stringify({
@@ -378,7 +387,7 @@ function Home() {
 
             {/* CTA Button */}
             <div className="hidden lg:block">
-              <button 
+              <button
                 onClick={() => setIsConsultDialogOpen(true)}
                 className="btn-primary text-sm"
               >
@@ -387,7 +396,7 @@ function Home() {
             </div>
 
             {/* Mobile Menu Button */}
-            <button 
+            <button
               className="lg:hidden p-2"
               onClick={() => setIsMenuOpen(!isMenuOpen)}
             >
@@ -431,7 +440,7 @@ function Home() {
                   </Link>
                 )
               ))}
-              <button 
+              <button
                 onClick={() => {
                   setIsConsultDialogOpen(true)
                   setIsMenuOpen(false)
@@ -463,25 +472,25 @@ function Home() {
                   <Heart className="w-4 h-4 text-[#f8a4b9]" />
                   <span className="text-sm font-medium text-[#e88aa3]">Creating Families Since 2017</span>
                 </div>
-                
+
                 <h1 className="hero-title text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-serif font-bold text-[#2d2d2d] leading-tight mb-6">
                   Creating Families,{' '}
                   <span className="text-[#f8a4b9]">Fulfilling Dreams</span>
                 </h1>
-                
+
                 <p className="hero-subtitle text-lg sm:text-xl text-[#666666] mb-8 max-w-xl">
                   Compassionate surrogacy services guiding you through every step of your journey to parenthood. Serving families in Nigeria, UK, and USA.
                 </p>
-                
+
                 <div className="hero-cta flex flex-wrap gap-4 mb-12">
-                  <button 
+                  <button
                     onClick={() => setIsConsultDialogOpen(true)}
                     className="btn-primary flex items-center gap-2"
                   >
                     Begin Your Journey
                     <ArrowRight className="w-5 h-5" />
                   </button>
-                  <button 
+                  <button
                     onClick={() => scrollToSection(aboutRef)}
                     className="btn-secondary"
                   >
@@ -504,13 +513,13 @@ function Home() {
               <div className="order-1 lg:order-2 relative">
                 <div className="relative">
                   <div className="absolute -inset-4 bg-[#f8a4b9] rounded-[3rem] opacity-20 blur-2xl" />
-                  <img 
-                    src="/images/logo1.jpeg" 
-                    alt="GEB Surrogacy Services" 
+                  <img
+                    src="/images/logo1.jpeg"
+                    alt="GEB Surrogacy Services"
                     className="relative w-full max-w-lg mx-auto rounded-3xl shadow-2xl animate-pulse-soft"
                   />
                 </div>
-                
+
                 {/* Floating Badge */}
                 <div className="absolute -bottom-6 -left-6 bg-white rounded-2xl shadow-xl p-4 animate-float">
                   <div className="flex items-center gap-3">
@@ -538,13 +547,13 @@ function Home() {
               <div className="scroll-reveal relative">
                 <div className="relative">
                   <div className="absolute -inset-4 bg-[#f8a4b9] rounded-[2rem] opacity-10" />
-                  <img 
-                    src="/images/image.png" 
-                    alt="Blessing Gbudje - Founder & CEO" 
+                  <img
+                    src="/images/image.png"
+                    alt="Blessing Gbudje - Founder & CEO"
                     className="relative w-full rounded-2xl shadow-xl"
                   />
                 </div>
-                
+
                 {/* Experience Badge */}
                 <div className="absolute -bottom-8 -right-8 bg-[#f8a4b9] text-white rounded-2xl p-6 shadow-xl">
                   <div className="text-4xl font-serif font-bold">10+</div>
@@ -558,15 +567,15 @@ function Home() {
                   <Users className="w-4 h-4 text-[#f8a4b9]" />
                   <span className="text-sm font-medium text-[#e88aa3]">About Us</span>
                 </div>
-                
+
                 <h2 className="text-3xl sm:text-4xl lg:text-5xl font-serif font-bold text-[#2d2d2d] mb-6">
                   A Legacy of Love & Expertise
                 </h2>
-                
+
                 <p className="text-lg text-[#666666] mb-6">
                   Founded by <strong className="text-[#2d2d2d]">Blessing Gbudje</strong> in 2017, GEB Surrogacy Services has been at the forefront of fertility assistance, serving families across Nigeria, the United Kingdom, and the United States. Our journey began with a simple mission: to help create families through compassionate care and professional excellence.
                 </p>
-                
+
                 <p className="text-[#666666] mb-8">
                   Blessing's personal experience as an altruistic surrogate in 2015 inspired her to establish an agency that truly understands the emotional and physical journey of all parties involved. "Surrogacy is like a calling for me," she says. "I'm passionate about making life liveable for everyone, especially women."
                 </p>
@@ -586,7 +595,7 @@ function Home() {
                   ))}
                 </div>
 
-                <button 
+                <button
                   onClick={() => scrollToSection(servicesRef)}
                   className="btn-primary"
                 >
@@ -618,17 +627,17 @@ function Home() {
 
             {/* Services Grid */}
             <div className="grid md:grid-cols-2 gap-6 lg:gap-8">
-              {(services.length > 0 ? services : SERVICES).map((service, index) => {
+              {(Array.isArray(services) && services.length > 0 ? services : SERVICES).map((service, index) => {
                 const iconMap: any = { Baby, Stethoscope, Users, FileText, Heart, Shield, Globe };
                 const Icon = typeof service.icon === 'string' ? (iconMap[service.icon] || Heart) : service.icon;
                 const features = typeof service.features === 'string' ? JSON.parse(service.features) : service.features;
-                
+
                 return (
-                  <div 
+                  <div
                     key={index}
                     className={`scroll-reveal group relative bg-white rounded-3xl p-8 border-2 transition-all duration-500 cursor-pointer ${
-                      activeService === index 
-                        ? 'border-[#f8a4b9] shadow-xl' 
+                      activeService === index
+                        ? 'border-[#f8a4b9] shadow-xl'
                         : 'border-gray-100 hover:border-[#f8a4b9]/50 hover:shadow-lg'
                     }`}
                     onClick={() => setActiveService(index)}
@@ -644,11 +653,11 @@ function Home() {
                       <div className="flex-1">
                         <h3 className="text-xl font-serif font-semibold text-[#2d2d2d] mb-2">{service.title}</h3>
                         <p className="text-[#666666] mb-4">{service.description}</p>
-                        
+
                         <div className={`grid grid-cols-2 gap-2 transition-all duration-500 overflow-hidden ${
                           activeService === index ? 'max-h-40 opacity-100' : 'max-h-0 opacity-0'
                         }`}>
-                          {features.map((feature: string, fIndex: number) => (
+                          {(Array.isArray(features) ? features : []).map((feature: string, fIndex: number) => (
                             <div key={fIndex} className="flex items-center gap-2">
                               <CheckCircle className="w-4 h-4 text-[#f8a4b9]" />
                               <span className="text-sm text-[#666666]">{feature}</span>
@@ -687,10 +696,10 @@ function Home() {
             <div className="relative">
               {/* Connection Line */}
               <div className="hidden lg:block absolute left-1/2 top-0 bottom-0 w-px bg-[#f8a4b9]/30" />
-              
+
               <div className="space-y-12 lg:space-y-0">
-                {PROCESS_STEPS.map((step, index) => (
-                  <div 
+                {(PROCESS_STEPS || []).map((step, index) => (
+                  <div
                     key={index}
                     className={`process-step lg:grid lg:grid-cols-2 lg:gap-12 items-center ${
                       index !== 0 ? 'lg:mt-12' : ''
@@ -708,7 +717,7 @@ function Home() {
                         <p className="text-[#666666]">{step.description}</p>
                       </div>
                     </div>
-                    
+
                     {/* Center Node */}
                     <div className="hidden lg:flex justify-center">
                       <div className="w-4 h-4 bg-[#f8a4b9] rounded-full border-4 border-white shadow-lg" />
@@ -741,8 +750,8 @@ function Home() {
 
             {/* Testimonials Grid */}
             <div className="grid md:grid-cols-3 gap-8">
-              {(testimonials.length > 0 ? testimonials : TESTIMONIALS).map((testimonial, index) => (
-                <div 
+              {(Array.isArray(testimonials) && testimonials.length > 0 ? testimonials : TESTIMONIALS).map((testimonial, index) => (
+                <div
                   key={index}
                   className="scroll-reveal bg-white rounded-3xl p-8 shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-2"
                 >
@@ -791,48 +800,73 @@ function Home() {
 
             {/* Blog Grid */}
             <AdSenseZone slot="home_blog_top" className="mb-12" />
-            
-            <div className="grid md:grid-cols-3 gap-8">
-              {blogPosts.length > 0 ? blogPosts.map((post, index) => (
-                <article 
-                  key={index}
-                  className="scroll-reveal bg-white rounded-3xl overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 group"
-                >
-                  <Link to={`/blog/${post.id}`}>
-                    <div className="h-48 overflow-hidden relative">
-                      <img 
-                        src={post.image_url || 'https://images.unsplash.com/photo-1516627145497-ae6968895b74?q=80&w=800'} 
-                        alt={post.title} 
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                      />
-                    </div>
-                  </Link>
-                  <div className="p-6">
-                    <div className="flex items-center gap-4 mb-4">
-                      <span className="px-3 py-1 bg-[#ffeef2] text-[#e88aa3] text-sm rounded-full">{post.category}</span>
-                      <span className="text-sm text-[#666666] flex items-center gap-1">
-                        <Clock className="w-4 h-4" />
-                        5 min read
-                      </span>
-                    </div>
-                    <h3 className="text-xl font-serif font-semibold text-[#2d2d2d] mb-3 group-hover:text-[#f8a4b9] transition-colors line-clamp-2">
-                      <Link to={`/blog/${post.id}`}>{post.title}</Link>
-                    </h3>
-                    <p className="text-[#666666] mb-4 line-clamp-2">{post.excerpt}</p>
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-[#666666]">{new Date(post.published_at || post.created_at).toLocaleDateString()}</span>
-                      <Link to={`/blog/${post.id}`} className="text-[#f8a4b9] font-medium flex items-center gap-1 group-hover:gap-2 transition-all">
-                        Read More
+
+            {/* Blog Grid Slider */}
+            <div className="relative overflow-hidden group pb-8">
+              <div 
+                className="flex gap-8 transition-transform duration-1000 ease-in-out"
+                style={{ 
+                  animation: (Array.isArray(blogPosts) && blogPosts.length > 3) ? `scroll-${blogPosts.length} 40s linear infinite` : 'none',
+                  width: (Array.isArray(blogPosts) && blogPosts.length > 3) ? `${blogPosts.length * 400 * 2}px` : '100%',
+                  display: (Array.isArray(blogPosts) && blogPosts.length > 3) ? 'flex' : 'grid',
+                  gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))'
+                }}
+              >
+                {[...(Array.isArray(blogPosts) ? blogPosts : []), ...(Array.isArray(blogPosts) && blogPosts.length > 3 ? blogPosts : [])].map((post, index) => (
+                  <article 
+                    key={index}
+                    className="flex-shrink-0 w-[300px] sm:w-[380px] scroll-reveal bg-white rounded-3xl overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 group"
+                  >
+                    <Link to={`/blog/${post.id || post._id}`}>
+                      <div className="h-56 overflow-hidden relative">
+                        <img 
+                          src={post.image_url || 'https://images.unsplash.com/photo-1516627145497-ae6968895b74?q=80&w=800'} 
+                          alt={post.title} 
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                        />
+                        <div className="absolute top-4 left-4">
+                          <span className="px-4 py-1 bg-white/90 backdrop-blur-sm rounded-full text-xs font-bold text-[#f8a4b9] shadow-sm">
+                            {post.category}
+                          </span>
+                        </div>
+                      </div>
+                    </Link>
+                    <div className="p-8">
+                      <div className="flex items-center gap-4 mb-4">
+                        <span className="text-sm text-[#666666] flex items-center gap-1">
+                          <Calendar className="w-4 h-4" />
+                          {new Date(post.published_at || post.created_at || Date.now()).toLocaleDateString()}
+                        </span>
+                        <span className="text-sm text-[#666666] flex items-center gap-1">
+                          <Clock className="w-4 h-4" />
+                          5 min read
+                        </span>
+                      </div>
+                      <h3 className="text-xl font-serif font-semibold text-[#2d2d2d] mb-3 group-hover:text-[#f8a4b9] transition-colors line-clamp-2">
+                        <Link to={`/blog/${post.id || post._id}`}>{post.title}</Link>
+                      </h3>
+                      <p className="text-[#666666] mb-6 line-clamp-2 text-sm leading-relaxed">{post.excerpt}</p>
+                      <Link 
+                        to={`/blog/${post.id || post._id}`}
+                        className="inline-flex items-center gap-2 text-sm font-bold text-[#f8a4b9] hover:gap-3 transition-all"
+                      >
+                        Read Full Story
                         <ArrowRight className="w-4 h-4" />
                       </Link>
                     </div>
-                  </div>
-                </article>
-              )) : (
-                <div className="col-span-3 text-center py-12 text-gray-500">
-                   Discover our latest insights on surrogacy and parenthood coming soon.
-                </div>
-              )}
+                  </article>
+                ))}
+              </div>
+              
+              <style>{`
+                @keyframes scroll-${blogPosts?.length || 0} {
+                  0% { transform: translateX(0); }
+                  100% { transform: translateX(calc(-380px * ${blogPosts?.length || 0} - 32px * ${blogPosts?.length || 0})); }
+                }
+                .group:hover div {
+                  animation-play-state: paused !important;
+                }
+              `}</style>
             </div>
           </div>
         </div>
@@ -857,13 +891,13 @@ function Home() {
                 Book a free consultation with our fertility experts today. Let's discuss how we can help make your dream of parenthood a reality.
               </p>
               <div className="flex flex-wrap justify-center gap-4">
-                <button 
+                <button
                   onClick={() => setIsConsultDialogOpen(true)}
                   className="px-8 py-4 bg-white text-[#f8a4b9] font-semibold rounded-full hover:bg-[#ffeef2] transition-all duration-300 hover:-translate-y-1 shadow-lg"
                 >
                   Schedule Free Consultation
                 </button>
-                <a 
+                <a
                   href={`https://wa.me/${COMPANY_INFO.whatsapp.replace('+', '')}`}
                   target="_blank"
                   rel="noopener noreferrer"
@@ -895,7 +929,7 @@ function Home() {
                   Creating families and fulfilling dreams through compassionate surrogacy services since 2017.
                 </p>
                 <div className="flex gap-4">
-                  <a 
+                  <a
                     href={COMPANY_INFO.facebook}
                     target="_blank"
                     rel="noopener noreferrer"
@@ -903,7 +937,7 @@ function Home() {
                   >
                     <Facebook className="w-5 h-5" />
                   </a>
-                  <a 
+                  <a
                     href={COMPANY_INFO.instagram}
                     target="_blank"
                     rel="noopener noreferrer"
@@ -911,7 +945,7 @@ function Home() {
                   >
                     <Instagram className="w-5 h-5" />
                   </a>
-                  <a 
+                  <a
                     href={`https://wa.me/${(siteSettings.whatsapp_number || COMPANY_INFO.whatsapp).replace(/[^\d]/g, '')}`}
                     target="_blank"
                     rel="noopener noreferrer"
@@ -934,7 +968,7 @@ function Home() {
                     { label: 'Blog', ref: blogRef }
                   ].map((link) => (
                     <li key={link.label}>
-                      <button 
+                      <button
                         onClick={() => scrollToSection(link.ref)}
                         className="text-gray-400 hover:text-[#f8a4b9] transition-colors"
                       >
@@ -997,8 +1031,8 @@ function Home() {
                 <h4 className="font-serif text-lg font-semibold mb-2">Subscribe to Our Newsletter</h4>
                 <p className="text-gray-400 mb-4">Get the latest updates on surrogacy news and stories.</p>
                 <form onSubmit={handleNewsletterSubmit} className="flex gap-2">
-                  <Input 
-                    type="email" 
+                  <Input
+                    type="email"
                     placeholder="Enter your email"
                     className="flex-1 bg-white/10 border-white/20 text-white placeholder:text-gray-500"
                     required
@@ -1028,7 +1062,7 @@ function Home() {
           <DialogHeader>
             <DialogTitle className="font-serif text-2xl">Book a Consultation</DialogTitle>
             <DialogDescription>
-              Fill out the form below and we'll get back to you within 24 hours. 
+              Fill out the form below and we'll get back to you within 24 hours.
               {siteSettings.consultation_fee && (
                 <span className="block mt-2 font-medium text-[#f8a4b9]">Consultation Fee: {siteSettings.consultation_fee}</span>
               )}

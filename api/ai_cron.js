@@ -87,7 +87,7 @@ class AIEngine {
       const blogData = JSON.parse(cleanedJson);
 
       // Generate a relevant image URL using Unsplash Source API
-      const imageUrl = `https://source.unsplash.com/800x600/?${encodeURIComponent(blogData.category || "family")}`;
+      const imageUrl = `https://loremflickr.com/800/600/${encodeURIComponent(blogData.category || "family,surrogacy")}`;
 
       const newPost = {
         title: blogData.title,

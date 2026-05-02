@@ -403,10 +403,10 @@ app.post("/api/admin/users", authenticateAdmin, async (req, res) => {
   }
 });
 
-// Public routes
 app.get("/api/services", async (req, res) => {
   try {
-    const services = await db.services.find({}).sort({ created_at: -1 });
+    const rawServices = await db.services.find({}).sort({ created_at: -1 });
+    const services = rawServices.map(s => ({ ...s, id: s._id }));
     res.json({ services });
   } catch (error) {
     res.status(500).json({ error: "Failed to fetch services" });
@@ -415,7 +415,8 @@ app.get("/api/services", async (req, res) => {
 
 app.get("/api/testimonies", async (req, res) => {
   try {
-    const testimonies = await db.testimonies.find({}).sort({ created_at: -1 });
+    const rawTestimonies = await db.testimonies.find({}).sort({ created_at: -1 });
+    const testimonies = rawTestimonies.map(t => ({ ...t, id: t._id }));
     res.json({ testimonies });
   } catch (error) {
     res.status(500).json({ error: "Failed to fetch testimonies" });
@@ -456,10 +457,10 @@ app.post("/api/track-visit", async (req, res) => {
   }
 });
 
-// --- BLOG POSTS (Public & Admin) ---
 app.get("/api/blog-posts", async (req, res) => {
   try {
-    const posts = await db.blog_posts.find({ status: "published" }).sort({ created_at: -1 });
+    const rawPosts = await db.blog_posts.find({ status: "published" }).sort({ created_at: -1 });
+    const posts = rawPosts.map(p => ({ ...p, id: p._id }));
     res.json({ posts });
   } catch (error) {
     res.status(500).json({ error: "Failed to fetch blog posts" });
@@ -495,7 +496,7 @@ app.post("/api/admin/blog-posts", authenticateAdmin, async (req, res) => {
       category: category || "Surrogacy",
       author: author || "Admin",
       status: status || "draft",
-      image_url: imageUrl || `https://source.unsplash.com/800x600/?${encodeURIComponent(category || 'baby')}`,
+      image_url: imageUrl || `https://loremflickr.com/800/600/${encodeURIComponent(category || 'family,surrogacy')}`,
       published_at: status === "published" ? new Date() : null,
       created_at: new Date()
     });
@@ -528,7 +529,8 @@ app.delete("/api/admin/blog-posts/:id", authenticateAdmin, async (req, res) => {
 // --- CONSULTATIONS ---
 app.get("/api/consultations", authenticateAdmin, async (req, res) => {
   try {
-    const consultations = await db.consultations.find({}).sort({ created_at: -1 });
+    const rawConsultations = await db.consultations.find({}).sort({ created_at: -1 });
+    const consultations = rawConsultations.map(c => ({ ...c, id: c._id }));
     res.json({ consultations });
   } catch (error) {
     res.status(500).json({ error: "Failed to fetch consultations" });
@@ -601,7 +603,8 @@ app.delete("/api/consultations/:id", authenticateAdmin, async (req, res) => {
 // --- AI LOGS & GENERATION ---
 app.get("/api/admin/ai/logs", authenticateAdmin, async (req, res) => {
   try {
-    const logs = await db.ai_logs.find({}).sort({ created_at: -1 }).limit(50);
+    const rawLogs = await db.ai_logs.find({}).sort({ created_at: -1 }).limit(50);
+    const logs = rawLogs.map(l => ({ ...l, id: l._id }));
     res.json({ logs });
   } catch (error) {
     res.status(500).json({ error: "Failed to fetch AI logs" });

@@ -1,8 +1,23 @@
+import { useState, useEffect } from 'react'
+import { useParams, Link } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { Input } from '@/components/ui/input'
 import { toast } from 'sonner'
-import { Facebook, Instagram, MessageCircle, Twitter, Send } from 'lucide-react'
+import { 
+  Facebook, 
+  Instagram, 
+  MessageCircle, 
+  Twitter, 
+  Send, 
+  Share2, 
+  ArrowLeft, 
+  User, 
+  Calendar, 
+  Tag 
+} from 'lucide-react'
+import SEO from '@/components/SEO'
+import AdSenseZone from '@/components/AdSenseZone'
 
 const BlogPost = () => {
   const { id } = useParams()

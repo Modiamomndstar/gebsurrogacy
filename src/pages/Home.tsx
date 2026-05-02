@@ -165,7 +165,7 @@ function Home() {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ pageUrl: window.location.pathname, referrer: document.referrer })
-    }).catch(err => console.error('Visit tracking failed'));
+    }).catch(() => console.error('Visit tracking failed'));
   }, [])
 
   const heroRef = useRef<HTMLDivElement>(null)

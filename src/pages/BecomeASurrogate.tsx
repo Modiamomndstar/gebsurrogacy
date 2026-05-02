@@ -8,9 +8,7 @@ import {
   Send,
   User,
   Phone,
-  Mail,
   MapPin,
-  Calendar,
   Info
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'

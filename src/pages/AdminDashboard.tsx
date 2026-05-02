@@ -303,8 +303,13 @@ export default function AdminDashboard() {
     e.preventDefault()
     const formData = new FormData(e.currentTarget as HTMLFormElement)
     const settings: any = {}
-    formData.forEach((value, key) => settings[key.toString()] = value)
+    formData.forEach((value, key) => {
+      settings[key.toString()] = value
+    })
     
+    // Explicitly handle checkboxes that might be missing if unchecked
+    settings.ai_auto_posting = formData.get('ai_auto_posting') === 'on' ? 'enabled' : 'disabled';
+
     const token = localStorage.getItem('admin_token')
     try {
       const res = await fetch('/api/admin/settings', {
@@ -312,7 +317,10 @@ export default function AdminDashboard() {
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
         body: JSON.stringify({ settings })
       })
-      if (res.ok) { toast.success('Settings updated'); fetchDashboardData(token!); }
+      if (res.ok) { 
+        toast.success('Settings updated'); 
+        fetchDashboardData(token!); 
+      }
     } catch (error) { toast.error('Error updating settings') }
   }
 
@@ -540,7 +548,7 @@ export default function AdminDashboard() {
                 <div className="col-span-2 bg-white rounded-2xl border p-8">
                   <div className="flex items-center justify-between mb-8">
                     <div>
-                      <h3 className="font-bold text-xl">AI Automation Center</h3>
+                      <h3 className="font-bold text-xl text-gray-900">AI Automation Center</h3>
                       <p className="text-sm text-gray-500 mt-1">Configure and monitor your AI content generator.</p>
                     </div>
                     <div className="flex gap-2">
@@ -550,7 +558,16 @@ export default function AdminDashboard() {
                         className="bg-[#f8a4b9] hover:bg-[#e88aa3]"
                        >
                         {isGenerating ? <RefreshCw className="w-4 h-4 mr-2 animate-spin" /> : <Zap className="w-4 h-4 mr-2" />}
-                        Generate Post Now
+                        Generate Trends
+                       </Button>
+                       <Button 
+                        disabled={isGenerating} 
+                        variant="outline"
+                        onClick={() => handleAIGenerate("Fictional Story")}
+                        className="border-[#f8a4b9] text-[#f8a4b9]"
+                       >
+                        <Baby className="w-4 h-4 mr-2" />
+                        Next Episode
                        </Button>
                     </div>
                   </div>
@@ -561,8 +578,8 @@ export default function AdminDashboard() {
                         <label className="text-sm font-medium">AI Provider</label>
                         <select name="ai_provider" defaultValue={siteSettings.ai_provider || 'gemini'} className="w-full h-10 px-3 rounded border border-gray-200">
                           <option value="gemini">Google Gemini</option>
-                          <option value="openai">OpenAI (GPT-3.5/4)</option>
-                          <option value="groq">Groq AI (Llama 3)</option>
+                          <option value="openai">OpenAI (GPT-4o)</option>
+                          <option value="groq">Groq AI (Llama 3.3)</option>
                         </select>
                       </div>
                       <div className="space-y-2">
@@ -572,13 +589,49 @@ export default function AdminDashboard() {
                     </div>
                     <div className="space-y-2">
                       <label className="text-sm font-medium">Target Topics (Comma separated)</label>
-                      <Input name="ai_topics" defaultValue={siteSettings.ai_topics} placeholder="Surrogacy, IVF, Parenthood..." />
+                      <Input name="ai_topics" defaultValue={siteSettings.ai_topics} placeholder="Surrogacy benefits, IVF tips, Parenthood journey..." />
                     </div>
-                    <div className="flex items-center gap-2 py-2">
-                      <input type="checkbox" name="ai_auto_posting" defaultChecked={siteSettings.ai_auto_posting === 'enabled'} />
-                      <label className="text-sm font-medium">Enable Daily Auto-Posting</label>
+                    <div className="flex items-center justify-between py-4 bg-gray-50 px-6 rounded-2xl">
+                      <div className="flex items-center gap-3">
+                        <input 
+                          type="checkbox" 
+                          id="auto_posting_check"
+                          name="ai_auto_posting" 
+                          defaultChecked={siteSettings.ai_auto_posting === 'enabled'} 
+                          className="w-5 h-5 accent-[#f8a4b9]"
+                        />
+                        <label htmlFor="auto_posting_check" className="text-sm font-bold text-gray-700">Enable Daily Auto-Posting (8 AM & 8 PM)</label>
+                      </div>
+                      <span className={`text-[10px] font-bold px-2 py-1 rounded-full ${siteSettings.ai_auto_posting === 'enabled' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
+                        {siteSettings.ai_auto_posting === 'enabled' ? 'ACTIVE' : 'DISABLED'}
+                      </span>
                     </div>
-                    <Button type="submit" variant="outline">Save AI Configuration</Button>
+                    <div className="flex gap-4">
+                      <Button type="submit" className="bg-[#f8a4b9]">Save AI Configuration</Button>
+                      <Button 
+                        type="button" 
+                        variant="outline" 
+                        onClick={async () => {
+                          if (confirm('This will replace all broken Flickr images with professional Unsplash photos. Proceed?')) {
+                            const postsToFix = blogPosts.filter(p => p.image_url?.includes('loremflickr'));
+                            const token = localStorage.getItem('admin_token');
+                            toast.info(`Repairing ${postsToFix.length} images...`);
+                            for (const post of postsToFix) {
+                              const newUrl = `https://source.unsplash.com/1200x800/?${encodeURIComponent(post.category.toLowerCase() + ' baby family')}`;
+                              await fetch(`/api/admin/blog-posts/${post.id}`, {
+                                method: 'PUT',
+                                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                                body: JSON.stringify({ ...post, image_url: newUrl })
+                              });
+                            }
+                            toast.success('Bulk Repair Complete!');
+                            fetchDashboardData(token!);
+                          }
+                        }}
+                      >
+                        <RefreshCw className="w-4 h-4 mr-2" /> Bulk Repair Images
+                      </Button>
+                    </div>
                   </form>
                 </div>
 
@@ -1034,7 +1087,41 @@ export default function AdminDashboard() {
                     </div>
 
                     <div className="space-y-4">
-                      <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Cover Media</label>
+                      <div className="flex items-center justify-between">
+                        <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Cover Media</label>
+                        <label className="text-[10px] font-bold text-[#f8a4b9] cursor-pointer hover:underline">
+                          Upload Photo
+                          <input 
+                            type="file" 
+                            className="hidden" 
+                            accept="image/*" 
+                            onChange={async (e) => {
+                              const file = e.target.files?.[0];
+                              if (file) {
+                                const formData = new FormData();
+                                formData.append('image', file);
+                                const token = localStorage.getItem('admin_token');
+                                try {
+                                  toast.info('Uploading image...');
+                                  const res = await fetch('/api/admin/upload', {
+                                    method: 'POST',
+                                    headers: { 'Authorization': `Bearer ${token}` },
+                                    body: formData
+                                  });
+                                  const data = await res.json();
+                                  if (data.url) {
+                                    const input = document.querySelector('input[name="imageUrl"]') as HTMLInputElement;
+                                    if (input) input.value = data.url;
+                                    toast.success('Image uploaded successfully!');
+                                    // If we're editing, update the state too
+                                    if (editingPost) setEditingPost({...editingPost, image_url: data.url});
+                                  }
+                                } catch (err) { toast.error('Upload failed'); }
+                              }
+                            }}
+                          />
+                        </label>
+                      </div>
                       <Input name="imageUrl" defaultValue={editingPost?.image_url} placeholder="Enter image URL..." className="bg-white border-gray-200 h-12 rounded-2xl shadow-sm text-xs" />
                       {editingPost?.image_url && (
                         <div className="relative group aspect-video rounded-[2rem] overflow-hidden border shadow-lg">

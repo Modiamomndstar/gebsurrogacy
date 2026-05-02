@@ -102,6 +102,28 @@ const db = {
 };
 
 // Initialize Database
+const multer = require("multer");
+const fs = require("fs");
+
+// Ensure uploads directory exists
+const uploadDir = path.join(__dirname, "uploads");
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir, { recursive: true });
+}
+
+// Multer storage config
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => cb(null, uploadDir),
+  filename: (req, file, cb) => {
+    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
+    cb(null, file.fieldname + "-" + uniqueSuffix + path.extname(file.originalname));
+  },
+});
+const upload = multer({ 
+  storage,
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
+});
+
 const initializeDatabase = async () => {
   try {
     const defaultEmail = (process.env.ADMIN_EMAIL || "admin@gebsurrogacy.com").trim().toLowerCase();
@@ -148,6 +170,7 @@ const initializeDatabase = async () => {
         uk_address: "Leeds, UK. +44 7933 193271",
         usa_address: "California, USA +13102188513",
         ai_provider: "gemini",
+        ai_auto_posting: "enabled", // Default to enabled
       });
       logger.info("Default settings initialized");
     }
@@ -171,6 +194,19 @@ const initializeDatabase = async () => {
 };
 
 initializeDatabase();
+
+// --- Static Uploads ---
+app.use("/uploads", express.static(uploadDir));
+
+// --- ADMIN UPLOAD ENDPOINT ---
+app.post("/api/admin/upload", authenticateAdmin, upload.single("image"), (req, res) => {
+  if (!req.file) return res.status(400).json({ error: "No file uploaded" });
+  const url = `/api/uploads/${req.file.filename}`;
+  res.json({ success: true, url });
+});
+
+// Since the client might call /api/uploads/... we need this proxy/alias if not serving directly
+app.use("/api/uploads", express.static(uploadDir));
 
 // Authentication middleware
 const authenticateAdmin = async (req, res, next) => {

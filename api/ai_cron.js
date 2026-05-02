@@ -90,10 +90,37 @@ class AIEngine {
         generatedJsonText = response.choices[0]?.message?.content || "";
       }
 
-      // Clean the response (sometimes AI wraps JSON in markdown blocks)
-      const cleanedJson = generatedJsonText.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
-      
-      const blogData = JSON.parse(cleanedJson);
+      // --- Robust JSON Extraction & Cleanup ---
+      const cleanAIResponse = (text) => {
+        try {
+          // 1. Remove markdown blocks
+          let cleaned = text.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
+          
+          // 2. Find the first '{' and last '}' to extract the JSON object
+          const startIdx = cleaned.indexOf('{');
+          const endIdx = cleaned.lastIndexOf('}');
+          if (startIdx === -1 || endIdx === -1) throw new Error("No JSON object found in AI response");
+          cleaned = cleaned.substring(startIdx, endIdx + 1);
+
+          // 3. Handle 'Bad control character' by removing literal newlines/tabs inside strings
+          // This regex finds content inside quotes and replaces literal newlines with \n
+          cleaned = cleaned.replace(/"([^"]*)"/g, (match, group) => {
+            return `"${group.replace(/\n/g, "\\n").replace(/\r/g, "\\r").replace(/\t/g, "\\t")}"`;
+          });
+
+          return JSON.parse(cleaned);
+        } catch (e) {
+          logger.error("JSON Cleanup/Parse Failed", { original: text, error: e.message });
+          // If parsing fails, try one last desperate attempt with a simpler regex
+          try {
+             const match = text.match(/\{[\s\S]*\}/);
+             if (match) return JSON.parse(match[0].replace(/\n/g, "\\n"));
+          } catch (inner) {}
+          throw new Error(`AI returned invalid JSON: ${e.message}`);
+        }
+      };
+
+      const blogData = cleanAIResponse(generatedJsonText);
 
       // Better Image Logic: Use Unsplash for more professional photos
       const keywords = blogData.image_keywords || blogData.category || "surrogacy baby family";

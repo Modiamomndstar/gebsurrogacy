@@ -75,7 +75,7 @@ class AIEngine {
         const groq = new Groq({ apiKey });
         const response = await groq.chat.completions.create({
           messages: [{ role: "user", content: prompt }],
-          model: "llama3-70b-8192",
+          model: "llama-3.3-70b-versatile",
           temperature: 0.7,
         });
         generatedJsonText = response.choices[0]?.message?.content || "";

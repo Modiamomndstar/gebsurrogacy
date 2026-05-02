@@ -910,41 +910,142 @@ export default function AdminDashboard() {
         </div>
       </main>
 
-      {/* Modals */}
+      {/* Premium Blog Editor Modal */}
       <Dialog open={isBlogModalOpen} onOpenChange={setIsBlogModalOpen}>
-        <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader><DialogTitle>{editingPost ? 'Edit Blog' : 'New Blog'}</DialogTitle></DialogHeader>
-          <form onSubmit={handleBlogSubmit} className="space-y-4">
-            <Input name="title" defaultValue={editingPost?.title} placeholder="Title" required />
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="text-xs font-bold uppercase text-gray-500 mb-1 block">Author</label>
-                <Input name="author" defaultValue={editingPost?.author || user?.username} placeholder="Author" />
+        <DialogContent className="max-w-[95vw] w-full h-[95vh] flex flex-col p-0 overflow-hidden rounded-3xl border-none shadow-2xl">
+          <div className="bg-[#1a1a1a] text-white p-6 flex justify-between items-center">
+            <div>
+              <DialogTitle className="text-2xl font-serif">{editingPost ? 'Refining Story' : 'Crafting New Insight'}</DialogTitle>
+              <p className="text-xs text-gray-400 mt-1">Professional Editorial Workspace</p>
+            </div>
+            <div className="flex gap-4">
+               {editingPost?.image_url?.includes('loremflickr') && (
+                 <Button 
+                   type="button" 
+                   variant="outline" 
+                   className="bg-amber-500/10 border-amber-500/20 text-amber-500 hover:bg-amber-500 hover:text-white transition-all"
+                   onClick={async () => {
+                     const newUrl = `https://source.unsplash.com/1200x800/?${encodeURIComponent(editingPost.category.toLowerCase() + ' baby family')}`;
+                     const token = localStorage.getItem('admin_token');
+                     await fetch(`/api/admin/blog-posts/${editingPost.id}`, {
+                       method: 'PUT',
+                       headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                       body: JSON.stringify({ ...editingPost, image_url: newUrl })
+                     });
+                     fetchDashboardData(token!);
+                     setEditingPost({ ...editingPost, image_url: newUrl });
+                     toast.success('Image Repaired with Premium Unsplash Photo!');
+                   }}
+                 >
+                   <RefreshCw className="w-4 h-4 mr-2" /> Smart Repair Image
+                 </Button>
+               )}
+               <Button variant="ghost" onClick={() => setIsBlogModalOpen(false)} className="text-white hover:bg-white/10"><X /></Button>
+            </div>
+          </div>
+
+          <form onSubmit={handleBlogSubmit} className="flex-1 flex flex-col overflow-hidden bg-[#fdfafb]">
+            <div className="flex-1 flex overflow-hidden">
+              {/* Editor Column */}
+              <div className="flex-1 p-8 overflow-y-auto space-y-8 border-r border-gray-100">
+                <div className="space-y-2">
+                  <label className="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400 ml-1">Headline</label>
+                  <Input 
+                    name="title" 
+                    defaultValue={editingPost?.title} 
+                    placeholder="Enter a compelling title..." 
+                    className="text-3xl font-serif font-bold h-20 bg-white border-transparent focus:border-[#f8a4b9] transition-all px-6 rounded-2xl shadow-sm"
+                    required 
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400 ml-1">Narrative Content (HTML Support)</label>
+                  <div className="bg-white rounded-3xl shadow-sm border border-transparent focus-within:border-[#f8a4b9] transition-all overflow-hidden">
+                    <div className="bg-gray-50 px-4 py-2 border-b flex gap-2">
+                      {['h2', 'h3', 'p', 'strong', 'ul', 'li'].map(tag => (
+                        <button 
+                          key={tag} 
+                          type="button"
+                          className="px-3 py-1 bg-white border rounded text-xs font-mono hover:bg-[#f8a4b9] hover:text-white transition-all"
+                          onClick={() => {
+                            const textarea = document.querySelector('textarea[name="content"]') as HTMLTextAreaElement;
+                            const start = textarea.selectionStart;
+                            const end = textarea.selectionEnd;
+                            const text = textarea.value;
+                            const before = text.substring(0, start);
+                            const after = text.substring(end, text.length);
+                            const selected = text.substring(start, end);
+                            const newText = `${before}<${tag}>${selected}</${tag}>${after}`;
+                            textarea.value = newText;
+                          }}
+                        >
+                          &lt;{tag}&gt;
+                        </button>
+                      ))}
+                    </div>
+                    <Textarea 
+                      name="content" 
+                      defaultValue={editingPost?.content} 
+                      placeholder="Start writing your story..." 
+                      className="min-h-[500px] border-none focus-visible:ring-0 text-lg leading-relaxed p-8 font-mono bg-transparent"
+                      required 
+                    />
+                  </div>
+                </div>
               </div>
-              <div>
-                <label className="text-xs font-bold uppercase text-gray-500 mb-1 block">Category</label>
-                <select name="category" defaultValue={editingPost?.category || 'Surrogacy'} className="w-full h-10 px-3 rounded border text-sm">
-                  {['Surrogacy', 'Parenthood', 'IVF', 'Egg Donation', 'Legal', 'Health', 'Fictional Story'].map(c => (
-                    <option key={c} value={c}>{c}</option>
-                  ))}
-                </select>
+
+              {/* Sidebar Column */}
+              <div className="w-96 bg-white p-8 space-y-8 overflow-y-auto">
+                <div className="space-y-6">
+                  <h4 className="font-bold text-sm uppercase tracking-widest text-gray-900 border-b pb-4">Metadata & Settings</h4>
+                  
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold text-gray-500">Category</label>
+                    <select name="category" defaultValue={editingPost?.category || 'Surrogacy'} className="w-full h-12 px-4 rounded-xl border border-gray-100 bg-gray-50 text-sm font-medium focus:ring-2 focus:ring-[#f8a4b9]/20 outline-none transition-all">
+                      {['Surrogacy', 'Parenthood', 'IVF', 'Egg Donation', 'Legal', 'Health', 'Fictional Story'].map(c => (
+                        <option key={c} value={c}>{c}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold text-gray-500">Publication Status</label>
+                    <select name="status" defaultValue={editingPost?.published_at ? 'published' : 'draft'} className="w-full h-12 px-4 rounded-xl border border-gray-100 bg-gray-50 text-sm font-medium focus:ring-2 focus:ring-[#f8a4b9]/20 outline-none transition-all">
+                      <option value="draft">Draft (Private)</option>
+                      <option value="published">Published (Live)</option>
+                    </select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold text-gray-500">Cover Image URL</label>
+                    <Input name="imageUrl" defaultValue={editingPost?.image_url} placeholder="https://..." className="bg-gray-50 border-gray-100 h-12 rounded-xl" />
+                    {editingPost?.image_url && (
+                      <div className="mt-4 rounded-2xl overflow-hidden aspect-video border shadow-inner">
+                        <img src={editingPost.image_url} alt="Preview" className="w-full h-full object-cover" />
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold text-gray-500">Excerpt (SEO Summary)</label>
+                    <Textarea name="excerpt" defaultValue={editingPost?.excerpt} placeholder="Brief summary..." className="bg-gray-50 border-gray-100 rounded-xl min-h-[100px]" />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold text-gray-500">Primary Author</label>
+                    <Input name="author" defaultValue={editingPost?.author || user?.username} placeholder="Author Name" className="bg-gray-50 border-gray-100 h-12 rounded-xl" />
+                  </div>
+                </div>
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="text-xs font-bold uppercase text-gray-500 mb-1 block">Status</label>
-                <select name="status" defaultValue={editingPost?.published_at ? 'published' : 'draft'} className="w-full h-10 px-3 rounded border text-sm">
-                  <option value="draft">Draft</option><option value="published">Published</option>
-                </select>
-              </div>
-              <div>
-                <label className="text-xs font-bold uppercase text-gray-500 mb-1 block">Image URL</label>
-                <Input name="imageUrl" defaultValue={editingPost?.image_url} placeholder="Image URL" />
-              </div>
+
+            <div className="p-6 bg-white border-t flex justify-end gap-4 shadow-[0_-4px_20px_rgba(0,0,0,0.05)]">
+              <Button type="button" variant="ghost" onClick={() => setIsBlogModalOpen(false)} className="rounded-xl px-8">Discard Changes</Button>
+              <Button type="submit" className="bg-[#f8a4b9] hover:bg-[#e88aa3] text-white px-12 h-14 rounded-xl font-bold shadow-lg shadow-[#f8a4b9]/20 transition-all hover:scale-105">
+                {editingPost ? 'Update Story' : 'Publish to World'}
+              </Button>
             </div>
-            <Textarea name="excerpt" defaultValue={editingPost?.excerpt} placeholder="Excerpt" />
-            <Textarea name="content" defaultValue={editingPost?.content} placeholder="Content" rows={25} required />
-            <DialogFooter><Button type="submit" className="bg-[#f8a4b9]">Save Post</Button></DialogFooter>
           </form>
         </DialogContent>
       </Dialog>

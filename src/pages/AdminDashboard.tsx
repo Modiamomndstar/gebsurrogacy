@@ -912,7 +912,7 @@ export default function AdminDashboard() {
 
       {/* Modals */}
       <Dialog open={isBlogModalOpen} onOpenChange={setIsBlogModalOpen}>
-        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
           <DialogHeader><DialogTitle>{editingPost ? 'Edit Blog' : 'New Blog'}</DialogTitle></DialogHeader>
           <form onSubmit={handleBlogSubmit} className="space-y-4">
             <Input name="title" defaultValue={editingPost?.title} placeholder="Title" required />
@@ -943,7 +943,7 @@ export default function AdminDashboard() {
               </div>
             </div>
             <Textarea name="excerpt" defaultValue={editingPost?.excerpt} placeholder="Excerpt" />
-            <Textarea name="content" defaultValue={editingPost?.content} placeholder="Content" rows={10} required />
+            <Textarea name="content" defaultValue={editingPost?.content} placeholder="Content" rows={25} required />
             <DialogFooter><Button type="submit" className="bg-[#f8a4b9]">Save Post</Button></DialogFooter>
           </form>
         </DialogContent>

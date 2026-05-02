@@ -35,44 +35,30 @@ class AIEngine {
       const isFictional = forceCategory === "Fictional Story";
       
       const prompt = `
-        You are an expert content writer and storyteller for GEB Surrogacy Services.
-        Write an SEO-optimized, engaging, and professional blog post about: "${topic}".
+        You are a world-class SEO content strategist and creative storyteller for GEB Surrogacy Services.
+        Your goal is to write a blog post that feels human, deeply emotional, and highly professional.
         
-        ${isFictional ? `
-        This is a FICTIONAL STORY episode. 
-        ${context}
-        - Create a compelling plot with suspense about a couple or individual's struggle to have a baby.
-        - Ensure the story highlights how GEB Surrogacy Services provided professional guidance, medical coordination, and emotional support.
-        - The story must end with a successful birth and happy parents, emphasizing that with God's help and GEB's expertise, dreams come true.
-        - Make it emotional, inspirational, and educational.
-        - At the end of the post, mention: "Don't miss our next episode, posting tomorrow at 8:00 PM!"
-        - If this is the conclusion of a story arc, label it clearly (e.g., "[Final Episode]").
-        ` : `
-        This is an EDUCATIONAL/TRENDING blog post.
-        - Provide high-quality information about surrogacy, IVF, or parenthood.
-        - Maintain a professional yet compassionate tone.
-        `}
+        Topic: "${topic}"
+        Category: ${forceCategory || "Surrogacy"}
 
-        Requirements:
-        1. Return ONLY valid JSON in the exact structure below, no markdown formatting blocks.
-        2. "title": A catchy, SEO-friendly title. For fictional stories, use episode-style titles (e.g., "The Journey Begins: Part 1").
-        3. "excerpt": A short, 2-sentence summary that builds curiosity.
-        4. "content": A comprehensive HTML string containing the full blog post.
-           - Use <h2> and <h3> for headings.
-           - Use <p>, <ul>, <li>, and <strong>.
-           - VERY IMPORTANT: Integrate 1-2 natural internal hyperlinks using <a href="/become-a-surrogate">Become a Surrogate</a> and <a href="/contact">Book a Consultation</a> where relevant in the text.
-           - Ensure the end of the post mentions contacting GEB Surrogacy for their own miracle.
-           - Make it at least 800 words.
-        5. "category": ${isFictional ? '"Fictional Story"' : 'Choose one of: Surrogacy, Parenthood, IVF, Egg Donation, Legal, Health.'}
-        6. "image_keywords": 2-3 specific keywords for finding a relevant photo (e.g., "pregnant woman", "baby", "surrogate mother", "happy family").
+        Tone Guidelines:
+        - Avoid repetitive introductory phrases.
+        - Use a mix of short, punchy sentences and longer, descriptive ones.
+        - For EDUCATIONAL posts: Be authoritative, compassionate, and informative.
+        - For FICTIONAL stories: Use vivid imagery and focused storytelling.
         
-        JSON Structure:
+        Structure Guidelines:
+        - Use varied HTML structures: <h2> and <h3> for hierarchy, <p> for flow, <ul>/<li> for readability, and <blockquote> for impact.
+        - Integrate 1-2 natural internal links using <a href="/become-a-surrogate" class="text-[#f8a4b9] font-bold underline">Become a Surrogate</a> or <a href="/contact" class="text-[#f8a4b9] font-bold underline">Book a Consultation</a>.
+        - Length: At least 1000 words.
+
+        Return ONLY valid JSON:
         {
-          "title": "",
-          "excerpt": "",
-          "content": "",
-          "category": "",
-          "image_keywords": ""
+          "title": "A unique, non-generic title",
+          "excerpt": "A high-conversion meta description (2 sentences)",
+          "content": "Full HTML string with diverse formatting",
+          "category": "One of: Surrogacy, Parenthood, IVF, Egg Donation, Legal, Health, Fictional Story",
+          "image_keywords": "3-4 specific visual keywords for a premium photo"
         }
       `;
 
@@ -84,23 +70,22 @@ class AIEngine {
         const response = await openai.chat.completions.create({
           model: "gpt-4o",
           messages: [{ role: "user", content: prompt }],
-          temperature: 0.7,
+          temperature: 0.8,
         });
         generatedJsonText = response.choices[0]?.message?.content || "";
       } else if (provider === "gemini") {
         const ai = new GoogleGenAI({ apiKey });
         const response = await ai.models.generateContent({
-          model: "gemini-2.5-flash",
+          model: "gemini-1.5-flash",
           contents: prompt,
         });
         generatedJsonText = response.text;
       } else {
-        // Groq uses Llama 3 (Open Source model running on Groq's fast inference engine)
         const groq = new Groq({ apiKey });
         const response = await groq.chat.completions.create({
           messages: [{ role: "user", content: prompt }],
           model: "llama-3.3-70b-versatile",
-          temperature: 0.7,
+          temperature: 0.8,
         });
         generatedJsonText = response.choices[0]?.message?.content || "";
       }
@@ -110,9 +95,9 @@ class AIEngine {
       
       const blogData = JSON.parse(cleanedJson);
 
-      // Generate a relevant image URL using the keywords from AI
-      const keywords = blogData.image_keywords || blogData.category || "surrogacy";
-      const imageUrl = `https://loremflickr.com/800/600/${encodeURIComponent(keywords.toLowerCase())}`;
+      // Better Image Logic: Use Unsplash for more professional photos
+      const keywords = blogData.image_keywords || blogData.category || "surrogacy baby family";
+      const imageUrl = `https://source.unsplash.com/1200x800/?${encodeURIComponent(keywords.toLowerCase().replace(/,/g, ""))}`;
 
       const newPost = {
         title: blogData.title,

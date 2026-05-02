@@ -75,6 +75,34 @@ app.use(
   })
 );
 
+// Authentication middleware
+const authenticateAdmin = async (req, res, next) => {
+  try {
+    const authHeader = req.headers["authorization"];
+    const token = authHeader?.split(" ")[1];
+
+    if (!token) return res.status(401).json({ error: "Unauthorized" });
+
+    const tokenHash = hashToken(token);
+    const user = await db.users.findOne({ token_hash: tokenHash, active: 1 });
+    
+    if (user) {
+      req.adminUser = user;
+      return next();
+    }
+
+    // Fallback for initial setup/dev
+    if (tokenHash === ADMIN_PASSWORD_HASH) {
+      req.adminUser = { username: "admin", role: "superadmin", active: 1 };
+      return next();
+    }
+
+    return res.status(403).json({ error: "Forbidden" });
+  } catch (err) {
+    return res.status(401).json({ error: "Unauthorized" });
+  }
+};
+
 app.use(cors({ origin: true, credentials: true }));
 app.use(bodyParser.json({ limit: "10mb" }));
 app.use(bodyParser.urlencoded({ extended: true, limit: "10mb" }));
@@ -207,34 +235,6 @@ app.post("/api/admin/upload", authenticateAdmin, upload.single("image"), (req, r
 
 // Since the client might call /api/uploads/... we need this proxy/alias if not serving directly
 app.use("/api/uploads", express.static(uploadDir));
-
-// Authentication middleware
-const authenticateAdmin = async (req, res, next) => {
-  try {
-    const authHeader = req.headers["authorization"];
-    const token = authHeader?.split(" ")[1];
-
-    if (!token) return res.status(401).json({ error: "Unauthorized" });
-
-    const tokenHash = hashToken(token);
-    const user = await db.users.findOne({ token_hash: tokenHash, active: 1 });
-    
-    if (user) {
-      req.adminUser = user;
-      return next();
-    }
-
-    // Fallback for initial setup/dev
-    if (tokenHash === ADMIN_PASSWORD_HASH) {
-      req.adminUser = { username: "admin", role: "superadmin", active: 1 };
-      return next();
-    }
-
-    return res.status(403).json({ error: "Forbidden" });
-  } catch (err) {
-    return res.status(401).json({ error: "Unauthorized" });
-  }
-};
 
 // --- AUTH ENDPOINTS ---
 

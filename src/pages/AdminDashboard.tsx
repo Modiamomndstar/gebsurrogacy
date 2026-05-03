@@ -1146,11 +1146,11 @@ export default function AdminDashboard() {
                    className="bg-amber-500/10 border-amber-500/20 text-amber-500 hover:bg-amber-500 hover:text-white transition-all rounded-full h-10 px-6"
                    onClick={async () => {
                      const cleanCategory = editingPost.category.replace(/[^a-zA-Z0-9\s]/g, '').replace(/\s+/g, ',');
-                     const newUrl = \`https://loremflickr.com/1200/800/\${encodeURIComponent(cleanCategory)}?random=\${Date.now()}\`;
+                     const newUrl = `https://loremflickr.com/1200/800/${encodeURIComponent(cleanCategory)}?random=${Date.now()}`;
                      const token = localStorage.getItem('admin_token');
-                     await fetch(\`/api/admin/blog-posts/\${editingPost.id || editingPost._id}\`, {
+                     await fetch(`/api/admin/blog-posts/${editingPost.id || editingPost._id}`, {
                        method: 'PUT',
-                       headers: { 'Content-Type': 'application/json', 'Authorization': \`Bearer \${token}\` },
+                       headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
                        body: JSON.stringify({ ...editingPost, image_url: newUrl })
                      });
                      fetchDashboardData(token!);

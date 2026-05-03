@@ -14,7 +14,7 @@ import AdSenseZone from '@/components/AdSenseZone'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 
-const CATEGORIES = ['All', 'Surrogacy', 'Parenthood', 'IVF', 'Egg Donation', 'Legal', 'Health', 'Fictional Story']
+const CATEGORIES = ['All', 'Surrogacy', 'Parenthood', 'IVF', 'Egg Donation', 'Legal', 'Health', 'Story']
 
 const Blog = () => {
   const [posts, setPosts] = useState<any[]>([])

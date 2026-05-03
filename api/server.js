@@ -66,10 +66,11 @@ app.use(
     contentSecurityPolicy: {
       directives: {
         ...helmet.contentSecurityPolicy.getDefaultDirectives(),
-        "img-src": ["'self'", "data:", "https://images.unsplash.com", "https://source.unsplash.com", "https://*.googleusercontent.com"],
-        "script-src": ["'self'", "'unsafe-inline'", "https://*.googletagmanager.com"],
-        "style-src": ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+        "img-src": ["'self'", "data:", "https://images.unsplash.com", "https://source.unsplash.com", "https://*.googleusercontent.com", "https://*.googlesyndication.com"],
+        "script-src": ["'self'", "'unsafe-inline'", "https://*.googletagmanager.com", "https://pagead2.googlesyndication.com", "https://adservice.google.com", "https://*.googlesyndication.com"],
+        "style-src": ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com", "https://*.googlesyndication.com"],
         "font-src": ["'self'", "https://fonts.gstatic.com"],
+        "frame-src": ["'self'", "https://googleads.g.doubleclick.net", "https://*.googlesyndication.com", "https://*.google.com"],
       },
     },
   })
@@ -191,16 +192,24 @@ const initializeDatabase = async () => {
     const settingsCount = await db.settings.count({});
     if (settingsCount === 0) {
       await db.settings.insert({
-        consultation_fee: "5000",
+        consultation_fee: "₦50,000 / $100",
         whatsapp_number: "+2347034270722",
-        contact_email: "info@gebsurrogacy.com",
+        contact_email: "gebsurrogacyservices@gmail.com",
+        nigeria_email: "gebheritagagency@gmail.com",
+        uk_email: "gebsurrogacyservices@gmail.com",
+        usa_email: "surrogacynigeria01@gmail.com",
+        contact_phone: "+2347034270722",
+        nigeria_phone: "+2347034270722",
+        uk_phone: "+447933193271",
+        usa_phone: "+13102188513",
         nigeria_address: "Block D5 Flat 36 CBN Estate 2, Satellite Town Lagos Nigeria",
-        uk_address: "Leeds, UK. +44 7933 193271",
-        usa_address: "California, USA +13102188513",
+        uk_address: "Leeds, UK",
+        usa_address: "California, USA",
         ai_provider: "gemini",
-        ai_auto_posting: "enabled", // Default to enabled
+        ai_auto_posting: "enabled",
+        site_name: "GEB Surrogacy Services"
       });
-      logger.info("Default settings initialized");
+      logger.info("Default settings initialized with official contact info");
     }
 
     logger.info("All database tables initialized");

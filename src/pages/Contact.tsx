@@ -64,21 +64,21 @@ export default function Contact() {
   const offices = [
     {
       city: 'Nigeria Office',
-      address: siteSettings.address_nigeria || 'Block D5 Flat 36 CBN Estate 2, Satellite Town Lagos Nigeria',
-      phone: siteSettings.contact_phone || '+2347034270722',
-      email: siteSettings.contact_email || 'gebheritagagency@gmail.com'
+      address: siteSettings.nigeria_address || 'Block D5 Flat 36 CBN Estate 2, Satellite Town Lagos Nigeria',
+      phone: siteSettings.nigeria_phone || '+2347034270722',
+      email: siteSettings.nigeria_email || 'gebheritagagency@gmail.com'
     },
     {
       city: 'UK Presence',
-      address: siteSettings.address_uk || 'Leeds, UK',
+      address: siteSettings.uk_address || 'Leeds, UK',
       phone: siteSettings.uk_phone || '+447933193271',
-      email: 'uk@gebsurrogacyservices.com'
+      email: siteSettings.uk_email || 'gebsurrogacyservices@gmail.com'
     },
     {
       city: 'USA Presence',
-      address: siteSettings.address_usa || 'California, USA',
+      address: siteSettings.usa_address || 'California, USA',
       phone: siteSettings.usa_phone || '+13102188513',
-      email: 'usa@gebsurrogacyservices.com'
+      email: siteSettings.usa_email || 'surrogacynigeria01@gmail.com'
     }
   ]
 
@@ -248,10 +248,10 @@ export default function Contact() {
       <section className="bg-white border-y border-[#f0e7ec] py-12">
         <div className="container mx-auto px-4 max-w-6xl">
           <div className="flex flex-wrap justify-center gap-12 grayscale opacity-50 hover:grayscale-0 hover:opacity-100 transition-all">
-            <a href="#" className="flex items-center gap-2 font-bold text-gray-900"><Instagram className="w-6 h-6" /> Instagram</a>
-            <a href="#" className="flex items-center gap-2 font-bold text-gray-900"><Facebook className="w-6 h-6" /> Facebook</a>
-            <a href="#" className="flex items-center gap-2 font-bold text-gray-900"><Twitter className="w-6 h-6" /> Twitter</a>
-            <a href="#" className="flex items-center gap-2 font-bold text-gray-900"><Linkedin className="w-6 h-6" /> LinkedIn</a>
+            <a href="https://instagram.com/geb_surrogacy_services" target="_blank" className="flex items-center gap-2 font-bold text-gray-900 hover:text-[#e4405f] transition-colors"><Instagram className="w-6 h-6" /> Instagram</a>
+            <a href="https://facebook.com/share/192smxW7GG/" target="_blank" className="flex items-center gap-2 font-bold text-gray-900 hover:text-[#1877f2] transition-colors"><Facebook className="w-6 h-6" /> Facebook</a>
+            <a href="https://wa.me/2347034270722" target="_blank" className="flex items-center gap-2 font-bold text-gray-900 hover:text-[#25d366] transition-colors"><MessageCircle className="w-6 h-6" /> WhatsApp</a>
+            <a href="mailto:info@gebsurrogacy.com" className="flex items-center gap-2 font-bold text-gray-900 hover:text-[#f8a4b9] transition-colors"><Mail className="w-6 h-6" /> Email</a>
           </div>
         </div>
       </section>

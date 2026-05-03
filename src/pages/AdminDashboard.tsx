@@ -563,7 +563,7 @@ export default function AdminDashboard() {
                        <Button 
                         disabled={isGenerating} 
                         variant="outline"
-                        onClick={() => handleAIGenerate("Fictional Story")}
+                        onClick={() => handleAIGenerate("Story")}
                         className="border-[#f8a4b9] text-[#f8a4b9]"
                        >
                         <Baby className="w-4 h-4 mr-2" />
@@ -612,34 +612,48 @@ export default function AdminDashboard() {
                         type="button" 
                         variant="outline" 
                         onClick={async () => {
-                          if (confirm('This will replace all broken Flickr images with professional Unsplash photos. Proceed?')) {
-                            const postsToFix = blogPosts.filter(p => p.image_url?.includes('loremflickr'));
+                          if (confirm('This will attempt to fix broken images (source.unsplash.com & loremflickr) and normalize categories. Proceed?')) {
                             const token = localStorage.getItem('admin_token');
-                            toast.info(`Repairing ${postsToFix.length} images...`);
                             const imageMap: { [key: string]: string } = {
                                 'Surrogacy': 'photo-1519494026892-80bbd2d6fd0d',
-                                'Parenthood': 'photo-1555252333-9f8e92e65df9',
+                                'Parenthood': 'photo-1516627145497-ae6968895b74',
                                 'IVF': 'photo-1581056771107-24ca5f033842',
                                 'Egg Donation': 'photo-1579154235884-332cfa090ff7',
                                 'Legal': 'photo-1589829545856-d10d557cf95f',
                                 'Health': 'photo-1505751172107-59c359f63677',
-                                'Fictional Story': 'photo-1532012197267-da84d127e765'
+                                'Story': 'photo-1536640712247-c5753b75fb71'
                               };
-                             for (const post of postsToFix) {
-                               const photoId = imageMap[post.category] || 'photo-1519494026892-80bbd2d6fd0d';
-                               const newUrl = `https://images.unsplash.com/${photoId}?auto=format&fit=crop&q=80&w=1200`;
-                               await fetch(`/api/admin/blog-posts/${post.id}`, {
-                                 method: 'PUT',
-                                 headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-                                 body: JSON.stringify({ ...post, image_url: newUrl })
-                               });
+                             
+                             let repairCount = 0;
+                             for (const post of blogPosts) {
+                               const cat = post.category === 'Story' ? 'Story' : post.category;
+                               let needsUpdate = false;
+                               if (post.category === 'Fictional Story') {
+                                 needsUpdate = true;
+                               }
+                               let newUrl = post.image_url;
+                               
+                               if (!post.image_url || post.image_url.includes('loremflickr') || post.image_url.includes('source.unsplash.com')) {
+                                 const photoId = imageMap[cat] || 'photo-1519494026892-80bbd2d6fd0d';
+                                 newUrl = `https://images.unsplash.com/${photoId}?auto=format&fit=crop&q=80&w=1200`;
+                                 needsUpdate = true;
+                               }
+                               
+                               if (needsUpdate) {
+                                 repairCount++;
+                                 await fetch(`/api/admin/blog-posts/${post.id}`, {
+                                   method: 'PUT',
+                                   headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                                   body: JSON.stringify({ ...post, category: cat, image_url: newUrl })
+                                 });
+                               }
                              }
-                            toast.success('Bulk Repair Complete!');
+                            toast.success(`Bulk Repair Complete! Repaired ${repairCount} posts.`);
                             fetchDashboardData(token!);
                           }
                         }}
                       >
-                        <RefreshCw className="w-4 h-4 mr-2" /> Bulk Repair Images
+                        <RefreshCw className="w-4 h-4 mr-2" /> Bulk Repair Content
                       </Button>
                     </div>
                   </form>
@@ -953,7 +967,10 @@ export default function AdminDashboard() {
               <form onSubmit={handleSettingsSubmit} className="space-y-6">
                 <div className="grid grid-cols-2 gap-6">
                   <div><label className="text-sm font-medium">Company Name</label><Input name="company_name" defaultValue={siteSettings.company_name} /></div>
-                  <div><label className="text-sm font-medium">Contact Email</label><Input name="contact_email" defaultValue={siteSettings.contact_email} /></div>
+                  <div><label className="text-sm font-medium">Contact Email (Global)</label><Input name="contact_email" defaultValue={siteSettings.contact_email} /></div>
+                  <div><label className="text-sm font-medium">Nigeria Email</label><Input name="nigeria_email" defaultValue={siteSettings.nigeria_email} /></div>
+                  <div><label className="text-sm font-medium">UK Email</label><Input name="uk_email" defaultValue={siteSettings.uk_email} /></div>
+                  <div><label className="text-sm font-medium">USA Email</label><Input name="usa_email" defaultValue={siteSettings.usa_email} /></div>
                   <div><label className="text-sm font-medium">Contact Phone (NG)</label><Input name="contact_phone" defaultValue={siteSettings.contact_phone} /></div>
                   <div><label className="text-sm font-medium">WhatsApp Number</label><Input name="whatsapp_number" defaultValue={siteSettings.whatsapp_number} /></div>
                   <div><label className="text-sm font-medium">UK Phone</label><Input name="uk_phone" defaultValue={siteSettings.uk_phone} /></div>
@@ -1006,7 +1023,7 @@ export default function AdminDashboard() {
                        'Egg Donation': 'photo-1579154235884-332cfa090ff7',
                        'Legal': 'photo-1589829545856-d10d557cf95f',
                        'Health': 'photo-1505751172107-59c359f63677',
-                       'Fictional Story': 'photo-1532012197267-da84d127e765'
+                       'Story': 'photo-1532012197267-da84d127e765'
                      };
                      const photoId = imageMap[editingPost.category] || 'photo-1519494026892-80bbd2d6fd0d';
                      const newUrl = `https://images.unsplash.com/${photoId}?auto=format&fit=crop&q=80&w=1200`;
@@ -1099,7 +1116,7 @@ export default function AdminDashboard() {
                     <div className="space-y-2">
                       <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Category</label>
                       <select name="category" defaultValue={editingPost?.category || 'Surrogacy'} className="w-full h-12 px-4 rounded-2xl border border-gray-200 bg-white text-sm font-bold focus:ring-4 focus:ring-[#f8a4b9]/10 outline-none transition-all appearance-none shadow-sm">
-                        {['Surrogacy', 'Parenthood', 'IVF', 'Egg Donation', 'Legal', 'Health', 'Fictional Story'].map(c => (
+                        {['Surrogacy', 'Parenthood', 'IVF', 'Egg Donation', 'Legal', 'Health', 'Story'].map(c => (
                           <option key={c} value={c}>{c}</option>
                         ))}
                       </select>

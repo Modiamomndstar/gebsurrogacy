@@ -32,7 +32,7 @@ class AIEngine {
 
       logger.info(`Generating post about '${topic}' using ${provider}...`);
 
-      const isFictional = forceCategory === "Fictional Story";
+      const isFictional = forceCategory === "Story";
       
       const prompt = `
         You are a world-class SEO content strategist and creative storyteller for GEB Surrogacy Services.
@@ -60,7 +60,7 @@ class AIEngine {
           "title": "A unique, non-generic title",
           "excerpt": "A high-conversion meta description (2 sentences)",
           "content": "Full semantic HTML string",
-          "category": "One of: Surrogacy, Parenthood, IVF, Egg Donation, Legal, Health, Fictional Story",
+          "category": "One of: Surrogacy, Parenthood, IVF, Egg Donation, Legal, Health, Story",
           "image_keywords": "3-4 specific visual keywords for a premium photo"
         }
       `;
@@ -128,15 +128,15 @@ class AIEngine {
       // Better Image Logic: Use stable, high-quality Unsplash IDs for reliability
       const imageMap = {
         'Surrogacy': 'photo-1519494026892-80bbd2d6fd0d',
-        'Parenthood': 'photo-1555252333-9f8e92e65df9',
+        'Parenthood': 'photo-1516627145497-ae6968895b74',
         'IVF': 'photo-1581056771107-24ca5f033842',
         'Egg Donation': 'photo-1579154235884-332cfa090ff7',
         'Legal': 'photo-1589829545856-d10d557cf95f',
         'Health': 'photo-1505751172107-59c359f63677',
-        'Fictional Story': 'photo-1532012197267-da84d127e765'
+        'Story': 'photo-1536640712247-c5753b75fb71'
       };
 
-      const category = blogData.category || (isFictional ? "Fictional Story" : "Surrogacy");
+      const category = blogData.category === "Fictional Story" || blogData.category === "Story" ? "Story" : (blogData.category || (isFictional ? "Story" : "Surrogacy"));
       const photoId = imageMap[category] || 'photo-1519494026892-80bbd2d6fd0d';
       const imageUrl = `https://images.unsplash.com/${photoId}?auto=format&fit=crop&q=80&w=1200`;
 
@@ -185,7 +185,7 @@ class AIEngine {
     }
 
     if (isEnabled) {
-      logger.info("AI Auto-posting is ENABLED. Scheduling twice daily jobs (8 AM Trends, 8 PM Fictional Episode)...");
+      logger.info("AI Auto-posting is ENABLED. Scheduling twice daily jobs (8 AM Trends, 8 PM Daily Story Episode)...");
       
       // 8:00 AM - Educational/Trending Blog Post
       cron.schedule("0 8 * * *", async () => {
@@ -198,10 +198,10 @@ class AIEngine {
 
       // 8:00 PM - Fictional Story Episode
       cron.schedule("0 20 * * *", async () => {
-        logger.info("Evening Cron: Generating Fictional Story Episode");
+        logger.info("Evening Cron: Generating Daily Story Episode");
         
-        // Find the most recent fictional story to provide context for episodes
-        const lastStory = await this.db.blog_posts.findOne({ category: "Fictional Story" }, { sort: { created_at: -1 } });
+        // Find the most recent story to provide context for episodes
+        const lastStory = await this.db.blog_posts.findOne({ category: "Story" }, { sort: { created_at: -1 } });
         
         const stories = [
           "A Miracle in Lagos: Sarah's Journey",
@@ -225,7 +225,7 @@ class AIEngine {
         }
 
         try { 
-          await this.generatePost(randomTopic, "Fictional Story", context); 
+          await this.generatePost(randomTopic, "Story", context); 
         } catch (err) { 
           logger.error("Evening cron failed", err); 
         }

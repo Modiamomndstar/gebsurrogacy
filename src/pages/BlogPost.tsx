@@ -107,17 +107,18 @@ const BlogPost = () => {
     </div>
   )
 
-  // Process content to add IDs to headings for the Table of Contents
-  const processedContent = post.content.replace(/<(h[23])>(.*?)<\/\1>/g, (_match: string, tag: string, text: string) => {
-    const id = text.toLowerCase().replace(/[^\w\s-]/g, '').replace(/\s+/g, '-');
-    return `<${tag} id="${id}">${text}</${tag}>`;
-  });
-
-  const tableOfContents = post.content.match(/<h[23]>(.*?)<\/h[23]>/g)?.map((match: string) => {
-    const text = match.replace(/<[^>]*>/g, '');
-    const id = text.toLowerCase().replace(/[^\w\s-]/g, '').replace(/\s+/g, '-');
-    return { text, id };
-  }) || [];
+  // Generate processed content and table of contents together for consistency
+  const { processedContent, tableOfContents } = (() => {
+    const headings: { text: string; id: string }[] = [];
+    // @ts-ignore - match is required by replace but not used here
+    const processed = post.content.replace(/<(h[23])>(.*?)<\/\1>/g, (match: string, tag: string, text: string) => {
+      const cleanText = text.replace(/<[^>]*>/g, '');
+      const headingId = cleanText.toLowerCase().replace(/[^\w\s-]/g, '').replace(/\s+/g, '-');
+      headings.push({ text: cleanText, id: headingId });
+      return `<${tag} id="${headingId}">${text}</${tag}>`;
+    });
+    return { processedContent: processed, tableOfContents: headings };
+  })();
 
   const scrollToId = (id: string) => {
     const element = document.getElementById(id);

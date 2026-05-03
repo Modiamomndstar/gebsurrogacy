@@ -125,15 +125,26 @@ class AIEngine {
 
       const blogData = cleanAIResponse(generatedJsonText);
 
-      // Better Image Logic: Use Unsplash for more professional photos
-      const keywords = blogData.image_keywords || blogData.category || "surrogacy baby family";
-      const imageUrl = `https://source.unsplash.com/1200x800/?${encodeURIComponent(keywords.toLowerCase().replace(/,/g, ""))}`;
+      // Better Image Logic: Use stable, high-quality Unsplash IDs for reliability
+      const imageMap = {
+        'Surrogacy': 'photo-1519494026892-80bbd2d6fd0d',
+        'Parenthood': 'photo-1555252333-9f8e92e65df9',
+        'IVF': 'photo-1581056771107-24ca5f033842',
+        'Egg Donation': 'photo-1579154235884-332cfa090ff7',
+        'Legal': 'photo-1589829545856-d10d557cf95f',
+        'Health': 'photo-1505751172107-59c359f63677',
+        'Fictional Story': 'photo-1532012197267-da84d127e765'
+      };
+
+      const category = blogData.category || (isFictional ? "Fictional Story" : "Surrogacy");
+      const photoId = imageMap[category] || 'photo-1519494026892-80bbd2d6fd0d';
+      const imageUrl = `https://images.unsplash.com/${photoId}?auto=format&fit=crop&q=80&w=1200`;
 
       const newPost = {
         title: blogData.title,
         excerpt: blogData.excerpt,
         content: blogData.content,
-        category: blogData.category || (isFictional ? "Fictional Story" : "Surrogacy"),
+        category: category,
         author: "GEB Surrogacy Manager",
         image_url: imageUrl,
         status: "published",

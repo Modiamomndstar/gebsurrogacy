@@ -616,14 +616,24 @@ export default function AdminDashboard() {
                             const postsToFix = blogPosts.filter(p => p.image_url?.includes('loremflickr'));
                             const token = localStorage.getItem('admin_token');
                             toast.info(`Repairing ${postsToFix.length} images...`);
-                            for (const post of postsToFix) {
-                              const newUrl = `https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?auto=format&fit=crop&q=80&w=1200&topic=${encodeURIComponent(post.category.toLowerCase())}`;
-                              await fetch(`/api/admin/blog-posts/${post.id}`, {
-                                method: 'PUT',
-                                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-                                body: JSON.stringify({ ...post, image_url: newUrl })
-                              });
-                            }
+                            const imageMap: { [key: string]: string } = {
+                                'Surrogacy': 'photo-1519494026892-80bbd2d6fd0d',
+                                'Parenthood': 'photo-1555252333-9f8e92e65df9',
+                                'IVF': 'photo-1581056771107-24ca5f033842',
+                                'Egg Donation': 'photo-1579154235884-332cfa090ff7',
+                                'Legal': 'photo-1589829545856-d10d557cf95f',
+                                'Health': 'photo-1505751172107-59c359f63677',
+                                'Fictional Story': 'photo-1532012197267-da84d127e765'
+                              };
+                             for (const post of postsToFix) {
+                               const photoId = imageMap[post.category] || 'photo-1519494026892-80bbd2d6fd0d';
+                               const newUrl = `https://images.unsplash.com/${photoId}?auto=format&fit=crop&q=80&w=1200`;
+                               await fetch(`/api/admin/blog-posts/${post.id}`, {
+                                 method: 'PUT',
+                                 headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                                 body: JSON.stringify({ ...post, image_url: newUrl })
+                               });
+                             }
                             toast.success('Bulk Repair Complete!');
                             fetchDashboardData(token!);
                           }
@@ -982,7 +992,17 @@ export default function AdminDashboard() {
                    variant="outline" 
                    className="bg-amber-500/10 border-amber-500/20 text-amber-500 hover:bg-amber-500 hover:text-white transition-all rounded-full h-10 px-6"
                    onClick={async () => {
-                     const newUrl = `https://source.unsplash.com/1200x800/?${encodeURIComponent(editingPost.category.toLowerCase() + ' baby family')}`;
+                     const imageMap: { [key: string]: string } = {
+                       'Surrogacy': 'photo-1519494026892-80bbd2d6fd0d',
+                       'Parenthood': 'photo-1555252333-9f8e92e65df9',
+                       'IVF': 'photo-1581056771107-24ca5f033842',
+                       'Egg Donation': 'photo-1579154235884-332cfa090ff7',
+                       'Legal': 'photo-1589829545856-d10d557cf95f',
+                       'Health': 'photo-1505751172107-59c359f63677',
+                       'Fictional Story': 'photo-1532012197267-da84d127e765'
+                     };
+                     const photoId = imageMap[editingPost.category] || 'photo-1519494026892-80bbd2d6fd0d';
+                     const newUrl = `https://images.unsplash.com/${photoId}?auto=format&fit=crop&q=80&w=1200`;
                      const token = localStorage.getItem('admin_token');
                      await fetch(`/api/admin/blog-posts/${editingPost.id}`, {
                        method: 'PUT',
@@ -991,7 +1011,7 @@ export default function AdminDashboard() {
                      });
                      fetchDashboardData(token!);
                      setEditingPost({ ...editingPost, image_url: newUrl });
-                     toast.success('Image Repaired with Premium Unsplash Photo!');
+                     toast.success('Image Repaired with Premium Photo!');
                    }}
                  >
                    <RefreshCw className="w-4 h-4 mr-2" /> Smart Repair

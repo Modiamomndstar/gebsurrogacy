@@ -32,20 +32,31 @@ class AIEngine {
 
       logger.info(`Generating post about '${topic}' using ${provider}...`);
 
+      // Fetch recent posts to avoid duplicates
+      const recentPosts = await this.db.blog_posts.find({}).sort({ created_at: -1 }).limit(10);
+      const recentTitles = recentPosts.map(p => `"${p.title}"`).join(", ");
+
       const isFictional = forceCategory === "Story";
       
       const prompt = `
-        You are a world-class SEO content strategist and creative storyteller for GEB Surrogacy Services.
-        Your goal is to write a blog post that feels human, deeply emotional, and highly professional.
+        You are a world-class SEO content strategist, medical writer, and creative storyteller for GEB Surrogacy Services.
+        Your goal is to write a highly valuable, 100% unique blog post that feels human, emotionally resonant, and deeply informative.
+        It is critical that this post meets Google AdSense quality guidelines for original, substantive content.
         
-        Topic: "${topic}"
-        Category: ${forceCategory || "Surrogacy"}
+        Topic Focus: "${topic}"
+        Category: ${forceCategory || "Choose the most appropriate from: Surrogacy, Parenthood, IVF, Egg Donation, Legal, Health, Story, News"}
 
-        Tone Guidelines:
-        - Avoid repetitive introductory phrases.
-        - Use a mix of short, punchy sentences and longer, descriptive ones.
-        - For EDUCATIONAL posts: Be authoritative, compassionate, and informative.
-        - For FICTIONAL stories: Use vivid imagery and focused storytelling.
+        ${context ? `Additional Context: ${context}\n` : ""}
+        CRITICAL UNIQUENESS RULES:
+        - DO NOT generate a post similar to any of these recently published titles: [${recentTitles}]
+        - NEVER start the post with generic phrases like "For individuals and couples seeking..." or "Embarking on the journey of...".
+        - The introduction must be a completely unique hook: start with a startling statistic, a profound question, a specific real-world scenario, or a bold statement.
+        
+        Tone & Content Guidelines:
+        - Include actionable advice, real-world nuances, and specific details (e.g., international laws, specific health tips).
+        - For EDUCATIONAL posts: Be authoritative, compassionate, and highly informative. Provide deep value, not just surface-level overviews.
+        - For FICTIONAL stories: Use vivid imagery, character depth, and focused storytelling.
+        - Ensure the content is structured logically with a high-value takeaway in every section.
         
         Structure Guidelines:
         - Generate CLEAN SEMANTIC HTML only. 
@@ -57,11 +68,11 @@ class AIEngine {
 
         Return ONLY valid JSON:
         {
-          "title": "A unique, non-generic title",
+          "title": "A unique, non-generic, highly captivating title",
           "excerpt": "A high-conversion meta description (2 sentences)",
           "content": "Full semantic HTML string",
-          "category": "One of: Surrogacy, Parenthood, IVF, Egg Donation, Legal, Health, Story",
-          "image_keywords": "3-4 specific visual keywords for a premium photo"
+          "category": "One of: Surrogacy, Parenthood, IVF, Egg Donation, Legal, Health, Story, News",
+          "image_keywords": "3-4 specific visual keywords for a premium photo (e.g., 'doctor,consultation,hospital' or 'happy,family,baby')"
         }
       `;
 
@@ -125,20 +136,13 @@ class AIEngine {
 
       const blogData = cleanAIResponse(generatedJsonText);
 
-      // Better Image Logic: Use stable, high-quality Unsplash IDs for reliability
-      const imageMap = {
-        'Surrogacy': 'photo-1519494026892-80bbd2d6fd0d',
-        'Parenthood': 'photo-1516627145497-ae6968895b74',
-        'IVF': 'photo-1581056771107-24ca5f033842',
-        'Egg Donation': 'photo-1579154235884-332cfa090ff7',
-        'Legal': 'photo-1589829545856-d10d557cf95f',
-        'Health': 'photo-1505751172107-59c359f63677',
-        'Story': 'photo-1536640712247-c5753b75fb71'
-      };
-
       const category = blogData.category === "Fictional Story" || blogData.category === "Story" ? "Story" : (blogData.category || (isFictional ? "Story" : "Surrogacy"));
-      const photoId = imageMap[category] || 'photo-1519494026892-80bbd2d6fd0d';
-      const imageUrl = `https://images.unsplash.com/${photoId}?auto=format&fit=crop&q=80&w=1200`;
+      
+      // Dynamic Unique Image Logic based on AI keywords
+      // Use loremflickr with a random cache-buster to guarantee uniqueness for every post
+      const rawKeywords = blogData.image_keywords || category || "surrogacy,family";
+      const cleanKeywords = rawKeywords.replace(/[^a-zA-Z0-9\s,]/g, '').replace(/\s+/g, ',').replace(/,+/g, ',');
+      const imageUrl = `https://loremflickr.com/1200/800/${encodeURIComponent(cleanKeywords)}?random=${Date.now()}`;
 
       const newPost = {
         title: blogData.title,
@@ -200,8 +204,21 @@ class AIEngine {
       cron.schedule("0 8 * * *", async () => {
         logger.info("Morning Cron: Generating Trends/Educational post");
         const currentSettings = await this.db.settings.findOne({});
-        const topics = (currentSettings?.ai_topics || "Surrogacy benefits, The surrogacy journey, IVF tips").split(",").map(t => t.trim());
-        const randomTopic = topics[Math.floor(Math.random() * topics.length)] || "Surrogacy benefits";
+        // Default expanded topic list if none configured
+        let topicsArray = [
+          "Surrogacy benefits", "The surrogacy journey", "IVF tips for success", 
+          "International surrogacy laws and regulations", "Understanding sperm donation",
+          "Surrogate health, nutrition and advice", "Crucial advice for intended parents",
+          "Sexual education and fertility", "General reproductive health and wellness",
+          "What surrogate mothers need to know", "Legal rights and contracts in surrogacy",
+          "Latest news and trends in fertility treatments", "Emotional well-being during IVF"
+        ];
+        
+        if (currentSettings?.ai_topics) {
+          topicsArray = currentSettings.ai_topics.split(",").map(t => t.trim());
+        }
+        
+        const randomTopic = topicsArray[Math.floor(Math.random() * topicsArray.length)] || "Surrogacy benefits";
         try { await this.generatePost(randomTopic); } catch (err) { logger.error("Morning cron failed", err); }
       });
 

@@ -1145,26 +1145,17 @@ export default function AdminDashboard() {
                    variant="outline" 
                    className="bg-amber-500/10 border-amber-500/20 text-amber-500 hover:bg-amber-500 hover:text-white transition-all rounded-full h-10 px-6"
                    onClick={async () => {
-                     const imageMap: { [key: string]: string } = {
-                       'Surrogacy': 'photo-1519494026892-80bbd2d6fd0d',
-                       'Parenthood': 'photo-1555252333-9f8e92e65df9',
-                       'IVF': 'photo-1581056771107-24ca5f033842',
-                       'Egg Donation': 'photo-1579154235884-332cfa090ff7',
-                       'Legal': 'photo-1589829545856-d10d557cf95f',
-                       'Health': 'photo-1505751172107-59c359f63677',
-                       'Story': 'photo-1532012197267-da84d127e765'
-                     };
-                     const photoId = imageMap[editingPost.category] || 'photo-1519494026892-80bbd2d6fd0d';
-                     const newUrl = `https://images.unsplash.com/${photoId}?auto=format&fit=crop&q=80&w=1200`;
+                     const cleanCategory = editingPost.category.replace(/[^a-zA-Z0-9\s]/g, '').replace(/\s+/g, ',');
+                     const newUrl = \`https://loremflickr.com/1200/800/\${encodeURIComponent(cleanCategory)}?random=\${Date.now()}\`;
                      const token = localStorage.getItem('admin_token');
-                     await fetch(`/api/admin/blog-posts/${editingPost.id}`, {
+                     await fetch(\`/api/admin/blog-posts/\${editingPost.id || editingPost._id}\`, {
                        method: 'PUT',
-                       headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                       headers: { 'Content-Type': 'application/json', 'Authorization': \`Bearer \${token}\` },
                        body: JSON.stringify({ ...editingPost, image_url: newUrl })
                      });
                      fetchDashboardData(token!);
                      setEditingPost({ ...editingPost, image_url: newUrl });
-                     toast.success('Image Repaired with Premium Photo!');
+                     toast.success('Generated New Unique Image!');
                    }}
                  >
                    <RefreshCw className="w-4 h-4 mr-2" /> Smart Repair

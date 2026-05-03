@@ -217,7 +217,9 @@ export default function AdminDashboard() {
       category: formData.get('category'),
       author: formData.get('author'),
       image_url: formData.get('image_url'),
-      published_at: formData.get('status') === 'published' ? new Date().toISOString() : null
+      status: formData.get('status'),
+      scheduled_at: formData.get('status') === 'scheduled' ? formData.get('scheduled_at') : null,
+      published_at: formData.get('status') === 'published' ? new Date().toISOString() : (formData.get('status') === 'scheduled' ? formData.get('scheduled_at') : null)
     }
     const token = localStorage.getItem('admin_token')
     const postId = editingPost?.id || editingPost?._id
@@ -1126,10 +1128,25 @@ export default function AdminDashboard() {
 
                     <div className="space-y-2">
                       <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Visibility</label>
-                      <select name="status" defaultValue={editingPost?.published_at ? 'published' : 'draft'} className="w-full h-12 px-4 rounded-2xl border border-gray-200 bg-white text-sm font-bold focus:ring-4 focus:ring-[#f8a4b9]/10 outline-none transition-all appearance-none shadow-sm">
+                      <select name="status" defaultValue={editingPost?.status || 'draft'} className="w-full h-12 px-4 rounded-2xl border border-gray-200 bg-white text-sm font-bold focus:ring-4 focus:ring-[#f8a4b9]/10 outline-none transition-all appearance-none shadow-sm" onChange={(e) => {
+                        // Show/hide scheduled date input based on status
+                        const dateInput = document.getElementById('scheduled-date-container');
+                        if (dateInput) dateInput.style.display = e.target.value === 'scheduled' ? 'block' : 'none';
+                      }}>
                         <option value="draft">Private Draft</option>
                         <option value="published">Live on Site</option>
+                        <option value="scheduled">Schedule for Later</option>
                       </select>
+                    </div>
+
+                    <div id="scheduled-date-container" className="space-y-2" style={{ display: editingPost?.status === 'scheduled' ? 'block' : 'none' }}>
+                      <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Schedule Date & Time</label>
+                      <Input 
+                        type="datetime-local" 
+                        name="scheduled_at" 
+                        defaultValue={editingPost?.scheduled_at ? new Date(editingPost.scheduled_at).toISOString().slice(0, 16) : ''} 
+                        className="bg-white border-gray-200 h-12 rounded-2xl shadow-sm text-xs" 
+                      />
                     </div>
 
                     <div className="space-y-4">

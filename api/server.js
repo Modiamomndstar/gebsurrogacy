@@ -225,9 +225,44 @@ const initializeDatabase = async () => {
         timestamp: new Date().toISOString()
       });
     });
+
+    // Start Scheduling Engine
+    startSchedulingEngine();
   } catch (err) {
     logger.error("Database initialization error", err);
   }
+};
+
+const startSchedulingEngine = () => {
+  logger.info("Scheduling Engine started");
+  // Check every 5 minutes
+  setInterval(async () => {
+    try {
+      const now = new Date();
+      const scheduledPosts = await db.blog_posts.find({ 
+        status: "scheduled", 
+        scheduled_at: { $lte: now.toISOString() } 
+      });
+
+      if (scheduledPosts.length > 0) {
+        logger.info(`Publishing ${scheduledPosts.length} scheduled posts...`);
+        for (const post of scheduledPosts) {
+          await db.blog_posts.update(
+            { _id: post._id }, 
+            { 
+              $set: { 
+                status: "published", 
+                published_at: post.scheduled_at || now.toISOString(),
+                updated_at: now
+              } 
+            }
+          );
+        }
+      }
+    } catch (err) {
+      logger.error("Scheduling Engine error:", err);
+    }
+  }, 5 * 60 * 1000); 
 };
 
 initializeDatabase();
@@ -611,7 +646,7 @@ app.get("/api/admin/blog-posts", authenticateAdmin, async (req, res) => {
 
 app.post("/api/admin/blog-posts", authenticateAdmin, async (req, res) => {
   try {
-    const { title, content, excerpt, category, author, status, image_url, imageUrl } = req.body;
+    const { title, content, excerpt, category, author, status, image_url, imageUrl, scheduled_at } = req.body;
     const newPost = await db.blog_posts.insert({
       title,
       content,
@@ -620,7 +655,8 @@ app.post("/api/admin/blog-posts", authenticateAdmin, async (req, res) => {
       author: author || "GEB Surrogacy Manager",
       status: status || "draft",
       image_url: image_url || imageUrl || `https://loremflickr.com/800/600/${encodeURIComponent(category || 'family,surrogacy')}`,
-      published_at: status === "published" ? new Date() : null,
+      scheduled_at: status === "scheduled" ? scheduled_at : null,
+      published_at: status === "published" ? new Date() : (status === "scheduled" ? scheduled_at : null),
       created_at: new Date()
     });
     res.status(201).json(newPost);
@@ -632,7 +668,11 @@ app.post("/api/admin/blog-posts", authenticateAdmin, async (req, res) => {
 app.put("/api/admin/blog-posts/:id", authenticateAdmin, async (req, res) => {
   try {
     const updates = req.body;
-    if (updates.status === "published" && !updates.published_at) updates.published_at = new Date();
+    if (updates.status === "published" && !updates.published_at) {
+      updates.published_at = new Date();
+    } else if (updates.status === "scheduled") {
+      updates.published_at = updates.scheduled_at;
+    }
     await db.blog_posts.update({ _id: req.params.id }, { $set: { ...updates, updated_at: new Date() } });
     res.json({ success: true });
   } catch (error) {

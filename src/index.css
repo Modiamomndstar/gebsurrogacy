@@ -227,34 +227,53 @@
   @apply text-gray-700 leading-[1.8] text-lg font-sans;
 }
 
+/* Sophisticated Drop Cap for the very first paragraph */
+.blog-content > p:first-of-type::first-letter {
+  @apply text-5xl font-serif font-bold text-[#f8a4b9] float-left mr-3 mt-2 leading-[0.8];
+}
+
 .blog-content h2 {
-  @apply text-3xl md:text-4xl font-serif font-bold text-[#1a1a1a] mt-16 mb-8 border-b pb-4 border-gray-50;
+  @apply text-3xl md:text-4xl font-serif font-bold text-[#1a1a1a] mt-20 mb-10 border-b pb-6 border-pink-50 relative;
+}
+
+.blog-content h2::after {
+  content: "";
+  @apply absolute bottom-0 left-0 w-24 h-1 bg-[#f8a4b9];
 }
 
 .blog-content h3 {
-  @apply text-2xl font-serif font-bold text-[#2d2d2d] mt-12 mb-6;
+  @apply text-2xl font-serif font-bold text-[#2d2d2d] mt-16 mb-8;
 }
 
 .blog-content p {
-  @apply mb-8;
+  @apply mb-10 text-gray-600;
 }
 
 .blog-content ul {
-  @apply my-10 space-y-6 list-none p-0;
+  @apply my-12 space-y-8 list-none p-0;
 }
 
 .blog-content li {
-  @apply flex gap-4 items-start;
+  @apply flex gap-5 items-start text-gray-600;
 }
 
 /* Custom Heart Marker for Lists */
 .blog-content li::before {
   content: "💗";
-  @apply flex-shrink-0 bg-pink-50 rounded-full w-8 h-8 flex items-center justify-center text-xs;
+  @apply flex-shrink-0 bg-pink-50 rounded-full w-10 h-10 flex items-center justify-center text-sm shadow-sm;
 }
 
 .blog-content blockquote {
-  @apply border-l-4 border-[#f8a4b9] bg-pink-50/30 p-8 my-12 rounded-r-2xl italic text-gray-600 font-serif text-xl;
+  @apply border-l-0 bg-pink-50/20 p-12 my-16 rounded-[2.5rem] italic text-gray-700 font-serif text-2xl text-center relative;
+}
+
+.blog-content blockquote::before {
+  content: "“";
+  @apply absolute top-4 left-8 text-7xl text-[#f8a4b9]/20 font-serif;
+}
+
+.blog-content hr {
+  @apply my-20 border-0 h-px bg-gradient-to-r from-transparent via-pink-100 to-transparent;
 }
 
 .blog-content strong {
@@ -262,18 +281,22 @@
 }
 
 .blog-content a {
-  @apply text-[#f8a4b9] font-bold no-underline hover:underline transition-all;
+  @apply text-[#f8a4b9] font-bold no-underline border-b-2 border-pink-100 hover:border-[#f8a4b9] transition-all pb-0.5;
 }
 
 .blog-content img {
-  @apply rounded-[2.5rem] shadow-2xl my-16 w-full object-cover;
+  @apply rounded-[3rem] shadow-2xl my-20 w-full object-cover border-8 border-white;
 }
 
 .blog-content .highlight {
-  @apply bg-[#fdfafb] border border-[#f8a4b9]/10 p-10 rounded-[2.5rem] my-12 text-center relative overflow-hidden;
+  @apply bg-[#2d2d2d] text-white p-12 rounded-[3rem] my-16 text-center relative overflow-hidden shadow-2xl;
+}
+
+.blog-content .highlight p {
+  @apply text-gray-300 mb-0;
 }
 
 .blog-content .highlight::after {
   content: "";
-  @apply absolute top-0 right-0 w-24 h-24 bg-[#f8a4b9]/5 rounded-full blur-3xl;
+  @apply absolute top-0 right-0 w-48 h-48 bg-white/5 rounded-full blur-3xl;
 }

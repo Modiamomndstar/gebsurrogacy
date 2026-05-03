@@ -531,8 +531,14 @@ export default function AdminDashboard() {
                       <td className="px-6 py-4 truncate max-w-xs">{p.title}</td>
                       <td className="px-6 py-4"><span className="px-2 py-1 bg-gray-100 rounded text-[10px] font-bold">{p.category}</span></td>
                       <td className="px-6 py-4">
-                        <span className={`px-2 py-1 rounded-full text-[10px] font-bold uppercase ${p.published_at ? 'bg-green-50 text-green-600' : 'bg-amber-50 text-amber-600'}`}>
-                          {p.published_at ? 'Published' : 'Draft'}
+                        <span className={`px-2 py-1 rounded-full text-[10px] font-bold uppercase ${
+                          p.status === 'published' ? 'bg-green-50 text-green-600' : 
+                          p.status === 'scheduled' ? 'bg-blue-50 text-blue-600' : 
+                          'bg-amber-50 text-amber-600'
+                        }`}>
+                          {p.status === 'published' ? 'Published' : 
+                           p.status === 'scheduled' ? `Scheduled · ${new Date(p.scheduled_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}` : 
+                           'Draft'}
                         </span>
                       </td>
                       <td className="px-6 py-4 text-right">

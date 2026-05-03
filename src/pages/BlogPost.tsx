@@ -108,7 +108,7 @@ const BlogPost = () => {
   )
 
   // Process content to add IDs to headings for the Table of Contents
-  const processedContent = post.content.replace(/<(h[23])>(.*?)<\/\1>/g, (match: string, tag: string, text: string) => {
+  const processedContent = post.content.replace(/<(h[23])>(.*?)<\/\1>/g, (_match: string, tag: string, text: string) => {
     const id = text.toLowerCase().replace(/[^\w\s-]/g, '').replace(/\s+/g, '-');
     return `<${tag} id="${id}">${text}</${tag}>`;
   });

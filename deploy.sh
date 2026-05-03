@@ -4,7 +4,7 @@
 
 echo "🚀 Starting Deployment..."
 
-# 1. Clear local changes (like package-lock.json) that block git pull
+# 1. Clear local changes that block git pull
 echo "📦 Stashing local changes..."
 git stash
 
@@ -21,8 +21,12 @@ npm install --prefix api
 echo "🏗️ Building frontend..."
 npm run build
 
-# 5. Restart backend with PM2
+# 5. Copy build to public_html
+echo "📂 Updating public web files..."
+cp -r dist/* ~/public_html/
+
+# 6. Restart backend with PM2
 echo "🔄 Restarting backend..."
-pm2 restart gebsurrogacy --update-env
+pm2 restart gebsurrogacy || pm2 start api/server.js --name gebsurrogacy --update-env
 
 echo "✅ Deployment Complete!"

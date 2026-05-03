@@ -8,11 +8,10 @@ import {
   Clock,
   Instagram,
   Facebook,
-  Twitter,
-  Linkedin,
   Send,
   ShieldCheck,
-  Headphones
+  Headphones,
+  MessageCircle
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'

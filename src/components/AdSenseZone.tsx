@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
 interface AdSenseZoneProps {
   slot: string;
@@ -8,10 +8,25 @@ interface AdSenseZoneProps {
 }
 
 const AdSenseZone = ({ slot, format = 'auto', style, className }: AdSenseZoneProps) => {
-  const adClient = "ca-pub-1302238357257714"; // Default or placeholder
+  const [adClient, setAdClient] = useState<string | null>(null);
 
   useEffect(() => {
-    if (adClient.includes('XXX')) return;
+    const fetchSettings = async () => {
+      try {
+        const res = await fetch('/api/settings');
+        if (res.ok) {
+          const data = await res.json();
+          setAdClient(data.settings?.adsense_client_id || null);
+        }
+      } catch (e) {
+        console.error('Failed to fetch AdSense settings');
+      }
+    };
+    fetchSettings();
+  }, []);
+
+  useEffect(() => {
+    if (!adClient || adClient.includes('XXX')) return;
     try {
       // @ts-ignore
       (window.adsbygoogle = window.adsbygoogle || []).push({});
@@ -20,10 +35,10 @@ const AdSenseZone = ({ slot, format = 'auto', style, className }: AdSenseZonePro
     }
   }, [adClient]);
 
-  if (adClient.includes('XXX')) {
+  if (!adClient || adClient.includes('XXX')) {
     return (
       <div className={`ad-zone my-8 flex justify-center items-center bg-gray-50 rounded-xl border border-dashed border-gray-200 overflow-hidden min-h-[100px] opacity-40 ${className}`}>
-        <span className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Ad Slot: {slot} (Configuration Required)</span>
+        <span className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Ad Slot: {slot} (Awaiting Configuration)</span>
       </div>
     );
   }

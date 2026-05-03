@@ -959,6 +959,13 @@ export default function AdminDashboard() {
                   <div><label className="text-sm font-medium">UK Phone</label><Input name="uk_phone" defaultValue={siteSettings.uk_phone} /></div>
                   <div><label className="text-sm font-medium">USA Phone</label><Input name="usa_phone" defaultValue={siteSettings.usa_phone} /></div>
                   <div><label className="text-sm font-medium">Consultation Fee</label><Input name="consultation_fee" defaultValue={siteSettings.consultation_fee} /></div>
+                  <div>
+                    <label className="text-sm font-medium flex items-center gap-2">
+                      Google AdSense Publisher ID
+                      <span className="text-[10px] bg-blue-50 text-blue-500 px-2 py-0.5 rounded-full font-bold">Format: ca-pub-xxxxxxxxxxxxxxxx</span>
+                    </label>
+                    <Input name="adsense_client_id" defaultValue={siteSettings.adsense_client_id} placeholder="ca-pub-..." />
+                  </div>
                 </div>
                 <div className="grid grid-cols-1 gap-6">
                   <div><label className="text-sm font-medium">Address (Nigeria)</label><Textarea name="address_nigeria" defaultValue={siteSettings.address_nigeria} /></div>

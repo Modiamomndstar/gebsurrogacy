@@ -222,3 +222,58 @@
 .container-custom {
   @apply max-w-7xl mx-auto;
 }
+/* --- Premium Blog Content Styling (Automated) --- */
+.blog-content {
+  @apply text-gray-700 leading-[1.8] text-lg font-sans;
+}
+
+.blog-content h2 {
+  @apply text-3xl md:text-4xl font-serif font-bold text-[#1a1a1a] mt-16 mb-8 border-b pb-4 border-gray-50;
+}
+
+.blog-content h3 {
+  @apply text-2xl font-serif font-bold text-[#2d2d2d] mt-12 mb-6;
+}
+
+.blog-content p {
+  @apply mb-8;
+}
+
+.blog-content ul {
+  @apply my-10 space-y-6 list-none p-0;
+}
+
+.blog-content li {
+  @apply flex gap-4 items-start;
+}
+
+/* Custom Heart Marker for Lists */
+.blog-content li::before {
+  content: "💗";
+  @apply flex-shrink-0 bg-pink-50 rounded-full w-8 h-8 flex items-center justify-center text-xs;
+}
+
+.blog-content blockquote {
+  @apply border-l-4 border-[#f8a4b9] bg-pink-50/30 p-8 my-12 rounded-r-2xl italic text-gray-600 font-serif text-xl;
+}
+
+.blog-content strong {
+  @apply text-gray-900 font-bold;
+}
+
+.blog-content a {
+  @apply text-[#f8a4b9] font-bold no-underline hover:underline transition-all;
+}
+
+.blog-content img {
+  @apply rounded-[2.5rem] shadow-2xl my-16 w-full object-cover;
+}
+
+.blog-content .highlight {
+  @apply bg-[#fdfafb] border border-[#f8a4b9]/10 p-10 rounded-[2.5rem] my-12 text-center relative overflow-hidden;
+}
+
+.blog-content .highlight::after {
+  content: "";
+  @apply absolute top-0 right-0 w-24 h-24 bg-[#f8a4b9]/5 rounded-full blur-3xl;
+}

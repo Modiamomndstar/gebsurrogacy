@@ -48,15 +48,18 @@ class AIEngine {
         - For FICTIONAL stories: Use vivid imagery and focused storytelling.
         
         Structure Guidelines:
-        - Use varied HTML structures: <h2> and <h3> for hierarchy, <p> for flow, <ul>/<li> for readability, and <blockquote> for impact.
-        - Integrate 1-2 natural internal links using <a href="/become-a-surrogate" class="text-[#f8a4b9] font-bold underline">Become a Surrogate</a> or <a href="/contact" class="text-[#f8a4b9] font-bold underline">Book a Consultation</a>.
-        - Length: At least 1000 words.
+        - Generate CLEAN SEMANTIC HTML only. 
+        - Use diverse structures: <h2> and <h3> for sections, <p> for body, <ul>/<li> for key points, and <blockquote> for testimonials or impact statements.
+        - DO NOT include inline styles, custom classes, or <div> wrappers.
+        - Integrate 1-2 natural internal links using <a href="/become-a-surrogate">Become a Surrogate</a> or <a href="/contact">Book a Consultation</a>.
+        - Use <p class="highlight">...</p> once for a high-impact call-to-action within the content.
+        - Length: At least 1200 words of rich, helpful content.
 
         Return ONLY valid JSON:
         {
           "title": "A unique, non-generic title",
           "excerpt": "A high-conversion meta description (2 sentences)",
-          "content": "Full HTML string with diverse formatting",
+          "content": "Full semantic HTML string",
           "category": "One of: Surrogacy, Parenthood, IVF, Egg Donation, Legal, Health, Fictional Story",
           "image_keywords": "3-4 specific visual keywords for a premium photo"
         }

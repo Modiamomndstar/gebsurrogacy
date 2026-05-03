@@ -179,15 +179,7 @@ const BlogPost = () => {
 
             <article className="bg-white rounded-[2.5rem] p-8 md:p-16 shadow-sm border border-gray-100 relative overflow-hidden">
               <div 
-                className="prose prose-sm md:prose-lg max-w-none 
-                  prose-headings:text-[#1a1a1a] prose-headings:font-serif prose-headings:font-bold prose-headings:mt-16 prose-headings:mb-8
-                  prose-h2:text-4xl prose-h2:border-b prose-h2:pb-4 prose-h2:border-gray-50
-                  prose-p:text-gray-600 prose-p:leading-[1.8] prose-p:mb-8 prose-p:text-lg
-                  prose-strong:text-gray-900 prose-strong:font-bold
-                  prose-ul:my-10 prose-li:mb-6 prose-li:text-lg prose-li:text-gray-600
-                  prose-a:text-[#f8a4b9] prose-a:font-bold prose-a:no-underline hover:underline
-                  prose-blockquote:border-l-4 prose-blockquote:border-[#f8a4b9] prose-blockquote:bg-pink-50/30 prose-blockquote:p-8 prose-blockquote:rounded-r-2xl prose-blockquote:italic
-                  prose-img:rounded-3xl prose-img:shadow-lg"
+                className="blog-content"
                 dangerouslySetInnerHTML={{ __html: post.content }}
               />
 

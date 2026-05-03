@@ -78,7 +78,7 @@ export default function Contact() {
       city: 'USA Presence',
       address: siteSettings.usa_address || 'California, USA',
       phone: siteSettings.usa_phone || '+13102188513',
-      email: siteSettings.usa_email || 'surrogacynigeria01@gmail.com'
+      email: siteSettings.usa_email || 'gebsurrogacyservices@gmail.com'
     }
   ]
 

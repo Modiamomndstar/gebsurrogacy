@@ -238,12 +238,15 @@ app.use("/uploads", express.static(uploadDir));
 // --- ADMIN UPLOAD ENDPOINT ---
 app.post("/api/admin/upload", authenticateAdmin, upload.single("image"), (req, res) => {
   if (!req.file) return res.status(400).json({ error: "No file uploaded" });
-  const url = `/api/uploads/${req.file.filename}`;
-  res.json({ success: true, url });
-});
-
 // Since the client might call /api/uploads/... we need this proxy/alias if not serving directly
 app.use("/api/uploads", express.static(uploadDir));
+// Extra safety for standard static path
+app.use("/uploads", express.static(uploadDir));
+
+// Ensure root-level access for development
+if (NODE_ENV === "development") {
+  app.use(express.static(path.join(__dirname, "../public")));
+}
 
 // --- AUTH ENDPOINTS ---
 
@@ -603,7 +606,7 @@ app.get("/api/admin/blog-posts", authenticateAdmin, async (req, res) => {
 
 app.post("/api/admin/blog-posts", authenticateAdmin, async (req, res) => {
   try {
-    const { title, content, excerpt, category, author, status, imageUrl } = req.body;
+    const { title, content, excerpt, category, author, status, image_url, imageUrl } = req.body;
     const newPost = await db.blog_posts.insert({
       title,
       content,
@@ -611,7 +614,7 @@ app.post("/api/admin/blog-posts", authenticateAdmin, async (req, res) => {
       category: category || "Surrogacy",
       author: author || "GEB Surrogacy Manager",
       status: status || "draft",
-      image_url: imageUrl || `https://loremflickr.com/800/600/${encodeURIComponent(category || 'family,surrogacy')}`,
+      image_url: image_url || imageUrl || `https://loremflickr.com/800/600/${encodeURIComponent(category || 'family,surrogacy')}`,
       published_at: status === "published" ? new Date() : null,
       created_at: new Date()
     });

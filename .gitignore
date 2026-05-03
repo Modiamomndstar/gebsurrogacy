@@ -37,6 +37,8 @@ database.sqlite-shm
 database.sqlite-wal
 *.db
 *.sqlite
+api/data/
+api/uploads/
 
 # Logs
 logs/

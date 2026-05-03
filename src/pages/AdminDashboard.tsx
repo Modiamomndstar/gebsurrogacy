@@ -216,11 +216,12 @@ export default function AdminDashboard() {
       content: formData.get('content'),
       category: formData.get('category'),
       author: formData.get('author'),
-      image_url: formData.get('imageUrl'),
+      image_url: formData.get('image_url'),
       published_at: formData.get('status') === 'published' ? new Date().toISOString() : null
     }
     const token = localStorage.getItem('admin_token')
-    const url = editingPost ? `/api/admin/blog-posts/${editingPost.id}` : '/api/admin/blog-posts'
+    const postId = editingPost?.id || editingPost?._id
+    const url = editingPost ? `/api/admin/blog-posts/${postId}` : '/api/admin/blog-posts'
     const method = editingPost ? 'PUT' : 'POST'
     try {
       const res = await fetch(url, {
@@ -243,7 +244,8 @@ export default function AdminDashboard() {
       active: formData.get('active') === 'on' ? 1 : 0
     };
     const token = localStorage.getItem('admin_token')
-    const url = editingTestimony ? `/api/admin/testimonies/${editingTestimony.id}` : '/api/admin/testimonies'
+    const testimonyId = editingTestimony?.id || editingTestimony?._id
+    const url = editingTestimony ? `/api/admin/testimonies/${testimonyId}` : '/api/admin/testimonies'
     const method = editingTestimony ? 'PUT' : 'POST'
     try {
       const res = await fetch(url, {
@@ -1154,11 +1156,20 @@ export default function AdminDashboard() {
                                   });
                                   const data = await res.json();
                                   if (data.url) {
-                                    const input = document.querySelector('input[name="imageUrl"]') as HTMLInputElement;
+                                    // Find specifically the blog image input
+                                    const input = e.target.closest('.space-y-4')?.querySelector('input[name="image_url"]') as HTMLInputElement;
                                     if (input) input.value = data.url;
                                     toast.success('Image uploaded successfully!');
-                                    // If we're editing, update the state too
-                                    if (editingPost) setEditingPost({...editingPost, image_url: data.url});
+                                    
+                                    // Sync with state for immediate preview
+                                    if (editingPost) {
+                                      setEditingPost({...editingPost, image_url: data.url});
+                                    } else {
+                                      // If creating new, we might need a temporary state or just rely on DOM
+                                      // For now, let's just make the preview show it
+                                      const previewImg = e.target.closest('.space-y-4')?.querySelector('img[alt="Preview"]');
+                                      if (previewImg) (previewImg as HTMLImageElement).src = data.url;
+                                    }
                                   }
                                 } catch (err) { toast.error('Upload failed'); }
                               }
@@ -1166,7 +1177,7 @@ export default function AdminDashboard() {
                           />
                         </label>
                       </div>
-                      <Input name="imageUrl" defaultValue={editingPost?.image_url} placeholder="Enter image URL..." className="bg-white border-gray-200 h-12 rounded-2xl shadow-sm text-xs" />
+                      <Input name="image_url" defaultValue={editingPost?.image_url} placeholder="Enter image URL..." className="bg-white border-gray-200 h-12 rounded-2xl shadow-sm text-xs" />
                       {editingPost?.image_url && (
                         <div className="relative group aspect-video rounded-[2rem] overflow-hidden border shadow-lg">
                           <img src={editingPost.image_url} alt="Preview" className="w-full h-full object-cover transition-transform group-hover:scale-110" />

@@ -238,6 +238,11 @@ app.use("/uploads", express.static(uploadDir));
 // --- ADMIN UPLOAD ENDPOINT ---
 app.post("/api/admin/upload", authenticateAdmin, upload.single("image"), (req, res) => {
   if (!req.file) return res.status(400).json({ error: "No file uploaded" });
+  logger.info(`File uploaded: ${req.file.filename}, size: ${req.file.size}`);
+  const url = `/api/uploads/${req.file.filename}`;
+  res.json({ success: true, url });
+});
+
 // Since the client might call /api/uploads/... we need this proxy/alias if not serving directly
 app.use("/api/uploads", express.static(uploadDir));
 // Extra safety for standard static path

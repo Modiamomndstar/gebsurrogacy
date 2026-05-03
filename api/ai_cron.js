@@ -153,6 +153,15 @@ class AIEngine {
       };
 
       await this.db.blog_posts.insert(newPost);
+
+      // Trigger social media posting (non-blocking)
+      try {
+        const SocialPoster = require("./social_poster");
+        const socialPoster = new SocialPoster(this.db);
+        await socialPoster.publishToSocial(newPost);
+      } catch (socialErr) {
+        logger.error("Social posting after AI generation failed (non-critical)", socialErr);
+      }
       
       await this.db.ai_logs.insert({
         action: "generated",

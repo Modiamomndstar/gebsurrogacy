@@ -313,6 +313,7 @@ export default function AdminDashboard() {
     
     // Explicitly handle checkboxes that might be missing if unchecked
     settings.ai_auto_posting = formData.get('ai_auto_posting') === 'on' ? 'enabled' : 'disabled';
+    settings.social_auto_post = formData.get('social_auto_post') === 'on' ? 'enabled' : 'disabled';
 
     const token = localStorage.getItem('admin_token')
     try {
@@ -516,21 +517,24 @@ export default function AdminDashboard() {
                   <Plus className="w-4 h-4 mr-2" /> New Post
                 </Button>
               </div>
+              <div className="overflow-x-auto">
               <table className="w-full text-left">
                 <thead>
                   <tr className="bg-gray-50 text-xs text-gray-500 uppercase">
-                    <th className="px-6 py-3">Title</th>
-                    <th className="px-6 py-3">Category</th>
-                    <th className="px-6 py-3">Status</th>
-                    <th className="px-6 py-3 text-right">Actions</th>
+                    <th className="px-4 py-3">Title</th>
+                    <th className="px-4 py-3">Category</th>
+                    <th className="px-4 py-3">Status</th>
+                    <th className="px-4 py-3">Created</th>
+                    <th className="px-4 py-3">Modified</th>
+                    <th className="px-4 py-3 text-right">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y">
                   {blogPosts.map(p => (
-                    <tr key={p.id} className="text-sm">
-                      <td className="px-6 py-4 truncate max-w-xs">{p.title}</td>
-                      <td className="px-6 py-4"><span className="px-2 py-1 bg-gray-100 rounded text-[10px] font-bold">{p.category}</span></td>
-                      <td className="px-6 py-4">
+                    <tr key={p.id || p._id} className="text-sm hover:bg-gray-50/50 transition-colors">
+                      <td className="px-4 py-3 truncate max-w-[250px] font-medium">{p.title}</td>
+                      <td className="px-4 py-3"><span className="px-2 py-1 bg-gray-100 rounded text-[10px] font-bold">{p.category}</span></td>
+                      <td className="px-4 py-3">
                         <span className={`px-2 py-1 rounded-full text-[10px] font-bold uppercase ${
                           p.status === 'published' ? 'bg-green-50 text-green-600' : 
                           p.status === 'scheduled' ? 'bg-blue-50 text-blue-600' : 
@@ -541,14 +545,42 @@ export default function AdminDashboard() {
                            'Draft'}
                         </span>
                       </td>
-                      <td className="px-6 py-4 text-right">
+                      <td className="px-4 py-3 text-xs text-gray-500">
+                        {p.created_at ? (
+                          <div>
+                            <div>{new Date(p.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}</div>
+                            <div className="text-gray-400">{new Date(p.created_at).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}</div>
+                          </div>
+                        ) : '—'}
+                      </td>
+                      <td className="px-4 py-3 text-xs text-gray-500">
+                        {p.updated_at ? (
+                          <div>
+                            <div>{new Date(p.updated_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}</div>
+                            <div className="text-gray-400">{new Date(p.updated_at).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}</div>
+                          </div>
+                        ) : <span className="text-gray-300">—</span>}
+                      </td>
+                      <td className="px-4 py-3 text-right flex items-center justify-end gap-1">
+                        <Button variant="ghost" size="sm" title="Share to Facebook" onClick={async () => {
+                          const token = localStorage.getItem('admin_token');
+                          const postId = p._id || p.id;
+                          try {
+                            toast.info('Sharing to Facebook...');
+                            const res = await fetch(`/api/admin/social/share/${postId}`, { method: 'POST', headers: { 'Authorization': `Bearer ${token}` } });
+                            const data = await res.json();
+                            if (data.success) toast.success('Shared to Facebook!');
+                            else toast.error(data.error || 'Failed to share');
+                          } catch { toast.error('Failed to share to Facebook'); }
+                        }}><Globe className="w-4 h-4 text-blue-500" /></Button>
                         <Button variant="ghost" size="sm" onClick={() => { setEditingPost(p); setIsBlogModalOpen(true); }}><Edit className="w-4 h-4" /></Button>
-                        <Button variant="ghost" size="sm" className="text-red-500" onClick={async () => { if(confirm('Delete?')) { const token = localStorage.getItem('admin_token'); await fetch(`/api/admin/blog-posts/${p.id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } }); fetchDashboardData(token!); } }}><Trash2 className="w-4 h-4" /></Button>
+                        <Button variant="ghost" size="sm" className="text-red-500" onClick={async () => { if(confirm('Delete?')) { const token = localStorage.getItem('admin_token'); await fetch(`/api/admin/blog-posts/${p._id || p.id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } }); fetchDashboardData(token!); } }}><Trash2 className="w-4 h-4" /></Button>
                       </td>
                     </tr>
                   ))}
                 </tbody>
               </table>
+              </div>
             </div>
           )}
 
@@ -1002,6 +1034,93 @@ export default function AdminDashboard() {
                 
                 <div className="flex justify-end pt-6"><Button type="submit" className="bg-[#f8a4b9]">Save All Settings</Button></div>
               </form>
+
+              {/* Social Media Settings */}
+              <div className="mt-10 pt-8 border-t">
+                <h3 className="font-bold text-lg mb-6 flex items-center gap-2"><Globe className="w-5 h-5 text-blue-500" /> Social Media Auto-Posting</h3>
+                <div className="bg-blue-50/50 rounded-xl p-6 space-y-4">
+                  <p className="text-sm text-gray-600">Automatically share new blog posts to your Facebook Page when they're published.</p>
+                  
+                  <div className="grid grid-cols-2 gap-6">
+                    <div>
+                      <label className="text-sm font-medium">Facebook Page ID</label>
+                      <Input 
+                        value={siteSettings.fb_page_id || ''} 
+                        onChange={(e) => setSiteSettings({...siteSettings, fb_page_id: e.target.value})}
+                        placeholder="e.g. 123456789012345"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium">Page Access Token</label>
+                      <Input 
+                        type="password"
+                        value={siteSettings.fb_page_token || ''} 
+                        onChange={(e) => setSiteSettings({...siteSettings, fb_page_token: e.target.value})}
+                        placeholder="Paste your long-lived Page Access Token"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-4 pt-2">
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input 
+                        type="checkbox" 
+                        className="w-4 h-4 rounded border-gray-300 text-blue-500 focus:ring-blue-500"
+                        checked={siteSettings.social_auto_post === 'enabled'}
+                        onChange={(e) => setSiteSettings({...siteSettings, social_auto_post: e.target.checked ? 'enabled' : 'disabled'})}
+                      />
+                      <span className="text-sm font-medium">Enable auto-posting to Facebook</span>
+                    </label>
+                  </div>
+
+                  <div className="flex gap-3 pt-2">
+                    <Button 
+                      type="button"
+                      className="bg-blue-500 hover:bg-blue-600 text-white"
+                      onClick={async () => {
+                        const token = localStorage.getItem('admin_token');
+                        // Save settings first
+                        try {
+                          await fetch('/api/admin/settings', {
+                            method: 'PUT',
+                            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                            body: JSON.stringify({ settings: { fb_page_id: siteSettings.fb_page_id, fb_page_token: siteSettings.fb_page_token, social_auto_post: siteSettings.social_auto_post } })
+                          });
+                        } catch {}
+                        // Then test
+                        try {
+                          toast.info('Testing Facebook connection...');
+                          const res = await fetch('/api/admin/social/test', { method: 'POST', headers: { 'Authorization': `Bearer ${token}` } });
+                          const data = await res.json();
+                          if (data.success) {
+                            toast.success(`Connected to "${data.page_name}" (${data.followers} followers)`);
+                          } else {
+                            toast.error(data.error || 'Connection failed');
+                          }
+                        } catch { toast.error('Connection test failed'); }
+                      }}
+                    >
+                      Test Connection
+                    </Button>
+                    <Button 
+                      type="button"
+                      variant="outline"
+                      onClick={async () => {
+                        const token = localStorage.getItem('admin_token');
+                        await fetch('/api/admin/settings', {
+                          method: 'PUT',
+                          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                          body: JSON.stringify({ settings: { fb_page_id: siteSettings.fb_page_id, fb_page_token: siteSettings.fb_page_token, social_auto_post: siteSettings.social_auto_post } })
+                        });
+                        toast.success('Social settings saved!');
+                        fetchDashboardData(token!);
+                      }}
+                    >
+                      Save Social Settings
+                    </Button>
+                  </div>
+                </div>
+              </div>
             </div>
           )}
         </div>

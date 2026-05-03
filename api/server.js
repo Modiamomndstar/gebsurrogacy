@@ -10,6 +10,7 @@ const validator = require("validator");
 const crypto = require("crypto");
 require("dotenv").config({ path: path.join(__dirname, ".env") });
 const AIEngine = require("./ai_cron");
+const SocialPoster = require("./social_poster");
 
 // Email Transporter setup
 const transporter = nodemailer.createTransport({
@@ -128,6 +129,7 @@ const db = {
   surrogate_apps: Datastore.create(path.join(dbPath, "surrogate_apps.db")),
   analytics: Datastore.create(path.join(dbPath, "analytics.db")),
   comments: Datastore.create(path.join(dbPath, "comments.db")),
+  social_logs: Datastore.create(path.join(dbPath, "social_logs.db")),
 };
 
 // Initialize Database
@@ -219,6 +221,10 @@ const initializeDatabase = async () => {
     await aiEngine.startCron();
     app.locals.aiEngine = aiEngine;
 
+    // Initialize Social Poster
+    const socialPoster = new SocialPoster(db);
+    app.locals.socialPoster = socialPoster;
+
     app.listen(PORT, "0.0.0.0", () => {
       logger.info(`Server running on port ${PORT}`, { 
         environment: NODE_ENV,
@@ -227,13 +233,13 @@ const initializeDatabase = async () => {
     });
 
     // Start Scheduling Engine
-    startSchedulingEngine();
+    startSchedulingEngine(socialPoster);
   } catch (err) {
     logger.error("Database initialization error", err);
   }
 };
 
-const startSchedulingEngine = () => {
+const startSchedulingEngine = (socialPoster) => {
   logger.info("Scheduling Engine started");
   // Check every 5 minutes
   setInterval(async () => {
@@ -257,6 +263,8 @@ const startSchedulingEngine = () => {
               } 
             }
           );
+          // Auto-post to social media when scheduled post goes live
+          try { await socialPoster.publishToSocial(post); } catch (e) { logger.error("Social post failed for scheduled post", e); }
         }
       }
     } catch (err) {
@@ -659,6 +667,10 @@ app.post("/api/admin/blog-posts", authenticateAdmin, async (req, res) => {
       published_at: status === "published" ? new Date() : (status === "scheduled" ? scheduled_at : null),
       created_at: new Date()
     });
+    // Auto-post to social media if published immediately
+    if (status === "published" && req.app.locals.socialPoster) {
+      req.app.locals.socialPoster.publishToSocial(newPost).catch(e => logger.error("Social post failed", e));
+    }
     res.status(201).json(newPost);
   } catch (error) {
     res.status(500).json({ error: "Failed to create blog post" });
@@ -667,6 +679,10 @@ app.post("/api/admin/blog-posts", authenticateAdmin, async (req, res) => {
 
 app.put("/api/admin/blog-posts/:id", authenticateAdmin, async (req, res) => {
   try {
+    // Check if this is being published for the first time
+    const existingPost = await db.blog_posts.findOne({ _id: req.params.id });
+    const isNewlyPublished = req.body.status === "published" && existingPost?.status !== "published";
+
     const updates = req.body;
     if (updates.status === "published" && !updates.published_at) {
       updates.published_at = new Date();
@@ -674,6 +690,12 @@ app.put("/api/admin/blog-posts/:id", authenticateAdmin, async (req, res) => {
       updates.published_at = updates.scheduled_at;
     }
     await db.blog_posts.update({ _id: req.params.id }, { $set: { ...updates, updated_at: new Date() } });
+
+    // Auto-post to social media when a post is published for the first time
+    if (isNewlyPublished && req.app.locals.socialPoster) {
+      const updatedPost = await db.blog_posts.findOne({ _id: req.params.id });
+      req.app.locals.socialPoster.publishToSocial(updatedPost).catch(e => logger.error("Social post failed", e));
+    }
     res.json({ success: true });
   } catch (error) {
     res.status(500).json({ error: "Failed to update blog post" });
@@ -686,6 +708,58 @@ app.delete("/api/admin/blog-posts/:id", authenticateAdmin, async (req, res) => {
     res.json({ success: true });
   } catch (error) {
     res.status(500).json({ error: "Failed to delete blog post" });
+  }
+});
+
+// --- SOCIAL MEDIA ENDPOINTS ---
+
+// Test Facebook connection
+app.post("/api/admin/social/test", authenticateAdmin, async (req, res) => {
+  try {
+    const socialPoster = req.app.locals.socialPoster;
+    if (!socialPoster) return res.status(500).json({ error: "Social poster not initialized" });
+    const result = await socialPoster.testConnection();
+    res.json(result);
+  } catch (error) {
+    res.status(400).json({ error: error.response?.data?.error?.message || error.message });
+  }
+});
+
+// Manually share a blog post to Facebook
+app.post("/api/admin/social/share/:id", authenticateAdmin, async (req, res) => {
+  try {
+    const post = await db.blog_posts.findOne({ _id: req.params.id });
+    if (!post) return res.status(404).json({ error: "Post not found" });
+    const socialPoster = req.app.locals.socialPoster;
+    if (!socialPoster) return res.status(500).json({ error: "Social poster not initialized" });
+    
+    const caption = await socialPoster.generateCaption(post);
+    const result = await socialPoster.postToFacebook(post, caption);
+    
+    await db.social_logs.insert({
+      post_id: post._id,
+      post_title: post.title,
+      platform: "facebook",
+      caption: caption,
+      fb_post_id: result.id,
+      status: "success",
+      manual: true,
+      created_at: new Date(),
+    });
+
+    res.json({ success: true, fb_post_id: result.id, caption });
+  } catch (error) {
+    res.status(500).json({ error: error.response?.data?.error?.message || error.message });
+  }
+});
+
+// Get social posting logs
+app.get("/api/admin/social/logs", authenticateAdmin, async (req, res) => {
+  try {
+    const logs = await db.social_logs.find({}).sort({ created_at: -1 }).limit(50);
+    res.json({ logs });
+  } catch (error) {
+    res.status(500).json({ error: "Failed to fetch social logs" });
   }
 });
 
@@ -858,7 +932,77 @@ app.use("/api/*", (req, res) => {
 const distPath = path.join(__dirname, "../dist");
 app.use(express.static(distPath));
 
-// Catch-all
-app.get("*", (req, res) => {
-  res.sendFile(path.join(distPath, "index.html"));
+// Catch-all with dynamic Open Graph tag injection for blog posts
+app.get("*", async (req, res) => {
+  const indexPath = path.join(distPath, "index.html");
+  
+  // If not a blog post route, just serve the static file
+  if (!req.path.startsWith('/blog/')) {
+    return res.sendFile(indexPath);
+  }
+
+  try {
+    // Extract ID from path, e.g., /blog/abc1234
+    const parts = req.path.split('/');
+    const postId = parts[parts.length - 1];
+    
+    // Fetch the blog post
+    const post = await db.blog_posts.findOne({ _id: postId });
+    
+    if (!post) {
+      return res.sendFile(indexPath);
+    }
+
+    // Read the static index.html
+    let htmlData = fs.readFileSync(indexPath, 'utf8');
+
+    // Create the new meta tags
+    const title = `${post.title} | GEB Surrogacy Services`;
+    const description = post.excerpt || "Read this full story on the GEB Surrogacy blog.";
+    const image = post.image_url || "https://gebsurrogacyservices.com/images/logo1.jpeg";
+    const url = `https://gebsurrogacyservices.com${req.path}`;
+
+    // Replace default OG tags
+    htmlData = htmlData.replace(
+      /<title>.*<\/title>/i,
+      `<title>${title}</title>`
+    )
+    .replace(
+      /<meta property="og:title" content="[^"]*" \/>/i,
+      `<meta property="og:title" content="${title}" />`
+    )
+    .replace(
+      /<meta property="og:description" content="[^"]*" \/>/i,
+      `<meta property="og:description" content="${description}" />`
+    )
+    .replace(
+      /<meta property="og:image" content="[^"]*" \/>/i,
+      `<meta property="og:image" content="${image}" />`
+    )
+    .replace(
+      /<meta property="og:url" content="[^"]*" \/>/i,
+      `<meta property="og:url" content="${url}" />`
+    )
+    .replace(
+      /<meta property="twitter:title" content="[^"]*" \/>/i,
+      `<meta property="twitter:title" content="${title}" />`
+    )
+    .replace(
+      /<meta property="twitter:description" content="[^"]*" \/>/i,
+      `<meta property="twitter:description" content="${description}" />`
+    )
+    .replace(
+      /<meta property="twitter:image" content="[^"]*" \/>/i,
+      `<meta property="twitter:image" content="${image}" />`
+    )
+    .replace(
+      /<meta property="twitter:url" content="[^"]*" \/>/i,
+      `<meta property="twitter:url" content="${url}" />`
+    );
+
+    res.send(htmlData);
+  } catch (error) {
+    logger.error("Error injecting OG tags for blog post", error);
+    res.sendFile(indexPath);
+  }
 });

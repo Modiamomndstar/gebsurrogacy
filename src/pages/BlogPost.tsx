@@ -107,9 +107,31 @@ const BlogPost = () => {
     </div>
   )
 
+  // Process content to add IDs to headings for the Table of Contents
+  const processedContent = post.content.replace(/<(h[23])>(.*?)<\/\1>/g, (match: string, tag: string, text: string) => {
+    const id = text.toLowerCase().replace(/[^\w\s-]/g, '').replace(/\s+/g, '-');
+    return `<${tag} id="${id}">${text}</${tag}>`;
+  });
+
   const tableOfContents = post.content.match(/<h[23]>(.*?)<\/h[23]>/g)?.map((match: string) => {
-    return match.replace(/<[^>]*>/g, '');
+    const text = match.replace(/<[^>]*>/g, '');
+    const id = text.toLowerCase().replace(/[^\w\s-]/g, '').replace(/\s+/g, '-');
+    return { text, id };
   }) || [];
+
+  const scrollToId = (id: string) => {
+    const element = document.getElementById(id);
+    if (element) {
+      const offset = 100;
+      const elementPosition = element.getBoundingClientRect().top;
+      const offsetPosition = elementPosition + window.pageYOffset - offset;
+
+      window.scrollTo({
+        top: offsetPosition,
+        behavior: 'smooth'
+      });
+    }
+  };
 
   return (
     <div className="min-h-screen bg-[#fdfafb]">
@@ -180,7 +202,7 @@ const BlogPost = () => {
             <article className="bg-white rounded-[2.5rem] p-8 md:p-16 shadow-sm border border-gray-100 relative overflow-hidden">
               <div 
                 className="blog-content"
-                dangerouslySetInnerHTML={{ __html: post.content }}
+                dangerouslySetInnerHTML={{ __html: processedContent }}
               />
 
               {/* Interaction Bar */}
@@ -270,11 +292,15 @@ const BlogPost = () => {
               <div className="bg-white rounded-[2.5rem] p-8 border border-gray-100">
                 <h4 className="font-serif font-bold mb-6">Table of Contents</h4>
                 <nav className="space-y-4">
-                  {tableOfContents.map((item: string, idx: number) => (
-                    <div key={idx} className="flex gap-4 group cursor-pointer">
+                  {tableOfContents.map((item: { text: string, id: string }, idx: number) => (
+                    <button 
+                      key={idx} 
+                      onClick={() => scrollToId(item.id)}
+                      className="flex w-full text-left gap-4 group cursor-pointer"
+                    >
                       <span className="text-xs font-bold text-gray-300 group-hover:text-[#f8a4b9]">{idx + 1}.</span>
-                      <span className="text-sm text-gray-500 group-hover:text-gray-900 transition-colors">{item}</span>
-                    </div>
+                      <span className="text-sm text-gray-500 group-hover:text-gray-900 transition-colors">{item.text}</span>
+                    </button>
                   ))}
                 </nav>
               </div>

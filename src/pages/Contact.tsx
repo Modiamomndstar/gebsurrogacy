@@ -64,20 +64,20 @@ export default function Contact() {
   const offices = [
     {
       city: 'Nigeria Office',
-      address: siteSettings.address_nigeria || 'Suite 2, 2nd Floor, ABM Plaza, Utako, Abuja',
-      phone: siteSettings.contact_phone || '+234 810 000 0000',
-      email: siteSettings.contact_email || 'info@gebsurrogacyservices.com'
+      address: siteSettings.address_nigeria || 'Block D5 Flat 36 CBN Estate 2, Satellite Town Lagos Nigeria',
+      phone: siteSettings.contact_phone || '+2347034270722',
+      email: siteSettings.contact_email || 'gebheritagagency@gmail.com'
     },
     {
       city: 'UK Presence',
-      address: siteSettings.address_uk || 'London, United Kingdom',
-      phone: siteSettings.uk_phone || '+44 700 000 0000',
+      address: siteSettings.address_uk || 'Leeds, UK',
+      phone: siteSettings.uk_phone || '+447933193271',
       email: 'uk@gebsurrogacyservices.com'
     },
     {
       city: 'USA Presence',
-      address: siteSettings.address_usa || 'Houston, Texas, USA',
-      phone: siteSettings.usa_phone || '+1 800 000 0000',
+      address: siteSettings.address_usa || 'California, USA',
+      phone: siteSettings.usa_phone || '+13102188513',
       email: 'usa@gebsurrogacyservices.com'
     }
   ]
@@ -151,7 +151,7 @@ export default function Contact() {
                   <p className="text-gray-400 leading-relaxed">
                     Our team typically responds to all inquiries within 24 business hours. For urgent matters, please use our WhatsApp support.
                   </p>
-                  <a href="https://wa.me/2348100000000" target="_blank" className="inline-flex items-center gap-2 text-[#f8a4b9] font-bold hover:gap-3 transition-all">
+                  <a href="https://wa.me/2347034270722" target="_blank" className="inline-flex items-center gap-2 text-[#f8a4b9] font-bold hover:gap-3 transition-all">
                     Chat on WhatsApp <ArrowLeft className="w-4 h-4 rotate-180" />
                   </a>
                 </div>

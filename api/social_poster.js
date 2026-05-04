@@ -29,7 +29,10 @@ class SocialPoster {
         throw new Error(`AI API Key for ${provider} not configured. Cannot generate social caption.`);
       }
 
-      const prompt = `You are a social media expert for GEB Surrogacy Services, a compassionate surrogacy agency based in Nigeria with offices in the UK and USA.
+      const prompt = `You are a social media expert for GEB Surrogacy Services.
+      
+COMPANY PROFILE:
+We are a surrogacy agency. We provide Surrogacy and IVF Services to intending parents all over the world. Our process involves handling, monitoring, and supervising the entire process. We offer services to intending parents in the #USA, #Canada, #UK, and others.
 
 Write a captivating Facebook post that promotes this new blog article. The post should:
 - Be 2-4 sentences that make people WANT to click and read

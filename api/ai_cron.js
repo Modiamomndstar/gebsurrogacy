@@ -43,6 +43,10 @@ class AIEngine {
         Your goal is to write a highly valuable, 100% unique blog post that feels human, emotionally resonant, and deeply informative.
         It is critical that this post meets Google AdSense quality guidelines for original, substantive content.
         
+        COMPANY PROFILE:
+        We are a surrogacy agency. We provide Surrogacy and IVF Services to intending parents all over the world. Our process involves handling, monitoring, and supervising the entire process. We offer services to intending parents in the #USA, #Canada, #UK, and others.
+        (Please incorporate this identity naturally into the content where appropriate without sounding repetitive).
+        
         Topic Focus: "${topic}"
         Category: ${forceCategory || "Choose the most appropriate from: Surrogacy, Parenthood, IVF, Egg Donation, Legal, Health, Story, News"}
 

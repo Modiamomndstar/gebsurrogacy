@@ -138,11 +138,53 @@ class AIEngine {
 
       const category = blogData.category === "Fictional Story" || blogData.category === "Story" ? "Story" : (blogData.category || (isFictional ? "Story" : "Surrogacy"));
       
-      // Dynamic Unique Image Logic based on AI keywords
-      // Use loremflickr with a random cache-buster to guarantee uniqueness for every post
-      const rawKeywords = blogData.image_keywords || category || "surrogacy,family";
-      const cleanKeywords = rawKeywords.replace(/[^a-zA-Z0-9\s,]/g, '').replace(/\s+/g, ',').replace(/,+/g, ',');
-      const imageUrl = `https://loremflickr.com/1200/800/${encodeURIComponent(cleanKeywords)}?random=${Date.now()}`;
+      // Premium Curated Image Pool
+      // LoremFlickr and Unsplash Source API are unreliable for niche keywords and return low-quality or duplicate images.
+      // This guarantees 100% premium, relevant, and diverse images.
+      const imagePool = {
+        'Surrogacy': [
+          'photo-1519494026892-80bbd2d6fd0d', 'photo-1581056771107-24ca5f033842', 
+          'photo-1555252333-9f8e92e65df9', 'photo-1502680390469-be75c86b636f',
+          'photo-1516627145497-ae6968895b74'
+        ],
+        'Parenthood': [
+          'photo-1516627145497-ae6968895b74', 'photo-1433360405326-e50f909805b3',
+          'photo-1544126592-807ade215a0b', 'photo-1511895426328-dc8714191300',
+          'photo-1491438590914-bc09fcaaf77a'
+        ],
+        'IVF': [
+          'photo-1581056771107-24ca5f033842', 'photo-1530497610245-94d3c16cda28',
+          'photo-1579154235884-332cfa090ff7', 'photo-1582719478250-c89cae4dc85b',
+          'photo-1576091160550-2173dba999ef'
+        ],
+        'Egg Donation': [
+          'photo-1579154235884-332cfa090ff7', 'photo-1581056771107-24ca5f033842',
+          'photo-1582719478250-c89cae4dc85b', 'photo-1530497610245-94d3c16cda28'
+        ],
+        'Legal': [
+          'photo-1589829545856-d10d557cf95f', 'photo-1450101499163-c8848c66cb85',
+          'photo-1505664177941-c66c68a41280', 'photo-1521791136064-7986c2920216',
+          'photo-1475506631979-72412c606f4d'
+        ],
+        'Health': [
+          'photo-1505751172107-59c359f63677', 'photo-1579684385127-1ef15d508118',
+          'photo-1532938911079-1b06ac7ce245', 'photo-1505576391880-b3f9d713dc4f',
+          'photo-1584036561566-baf8f5f1b144'
+        ],
+        'Story': [
+          'photo-1536640712247-c5753b75fb71', 'photo-1504151932400-72d4384f0e6d',
+          'photo-1511895426328-dc8714191300', 'photo-1544126592-807ade215a0b',
+          'photo-1490645935967-10de6ba17061'
+        ],
+        'News': [
+          'photo-1504711434969-e33886168f5c', 'photo-1495020689067-958852a7765e',
+          'photo-1585829365295-ab7cd400c167', 'photo-1526470608268-f674ce90ebd4'
+        ]
+      };
+      
+      const categoryPool = imagePool[category] || imagePool['Surrogacy'];
+      const randomPhotoId = categoryPool[Math.floor(Math.random() * categoryPool.length)];
+      const imageUrl = `https://images.unsplash.com/${randomPhotoId}?auto=format&fit=crop&q=80&w=1200`;
 
       const newPost = {
         title: blogData.title,

@@ -462,6 +462,12 @@ app.put("/api/admin/settings", authenticateAdmin, async (req, res) => {
     } else {
       await db.settings.insert({ ...newSettings, updated_at: new Date() });
     }
+    
+    // Restart AI Cron Jobs to reflect new settings
+    if (req.app.locals.aiEngine) {
+      req.app.locals.aiEngine.startCron().catch(err => logger.error("Failed to restart AI Cron", err));
+    }
+    
     res.json({ success: true });
   } catch (error) {
     res.status(500).json({ error: "Failed to update settings" });

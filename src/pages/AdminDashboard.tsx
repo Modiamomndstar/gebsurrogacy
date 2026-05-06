@@ -587,30 +587,42 @@ export default function AdminDashboard() {
           {activeTab === 'ai' && (
             <div className="space-y-8">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="col-span-2 bg-white rounded-2xl border p-8">
+                <div className="col-span-2 bg-white rounded-2xl border p-8 shadow-sm">
                   <div className="flex items-center justify-between mb-8">
                     <div>
-                      <h3 className="font-bold text-xl text-gray-900">AI Automation Center</h3>
-                      <p className="text-sm text-gray-500 mt-1">Configure and monitor your AI content generator.</p>
+                      <h3 className="font-bold text-2xl text-gray-900 tracking-tight">AI Automation Center</h3>
+                      <p className="text-sm text-gray-500 mt-2 max-w-lg">Configure your AI content generator. The system generates 100% unique, SEO-optimized content across four daily time slots to keep your blog active.</p>
                     </div>
-                    <div className="flex gap-2">
+                    <div className="flex flex-col gap-2 items-end">
                        <Button 
                         disabled={isGenerating} 
                         onClick={() => handleAIGenerate()}
-                        className="bg-[#f8a4b9] hover:bg-[#e88aa3]"
+                        className="bg-gradient-to-r from-[#f8a4b9] to-[#f47c98] hover:opacity-90 shadow-md text-white border-0 transition-all"
+                        title="Manually generate a high-value educational or trend-based article immediately."
                        >
                         {isGenerating ? <RefreshCw className="w-4 h-4 mr-2 animate-spin" /> : <Zap className="w-4 h-4 mr-2" />}
-                        Generate Trends
+                        Generate Article Now
                        </Button>
                        <Button 
                         disabled={isGenerating} 
                         variant="outline"
                         onClick={() => handleAIGenerate("Story")}
-                        className="border-[#f8a4b9] text-[#f8a4b9]"
+                        className="border-[#f8a4b9] text-[#f8a4b9] hover:bg-[#f8a4b9]/5"
+                        title="Generate the next chronological episode of the ongoing surrogacy story series."
                        >
                         <Baby className="w-4 h-4 mr-2" />
-                        Next Episode
+                        Generate Next Story
                        </Button>
+                    </div>
+                  </div>
+
+                  <div className="mb-8 p-4 bg-blue-50 border border-blue-100 rounded-xl">
+                    <h4 className="font-bold text-blue-900 flex items-center gap-2 mb-2"><Clock className="w-4 h-4"/> 4x Daily Schedule Focus (When Enabled)</h4>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-xs text-blue-800">
+                      <div className="bg-white/60 p-2 rounded-lg border border-blue-100"><strong>6:00 AM</strong><br/>Health & IVF</div>
+                      <div className="bg-white/60 p-2 rounded-lg border border-blue-100"><strong>12:00 PM</strong><br/>News & Trends</div>
+                      <div className="bg-white/60 p-2 rounded-lg border border-blue-100"><strong>6:00 PM</strong><br/>Legal & Parents</div>
+                      <div className="bg-white/60 p-2 rounded-lg border border-blue-100"><strong>10:00 PM</strong><br/>Fictional Story</div>
                     </div>
                   </div>
 
@@ -642,17 +654,18 @@ export default function AdminDashboard() {
                           defaultChecked={siteSettings.ai_auto_posting === 'enabled'} 
                           className="w-5 h-5 accent-[#f8a4b9]"
                         />
-                        <label htmlFor="auto_posting_check" className="text-sm font-bold text-gray-700">Enable Daily Auto-Posting (8 AM & 8 PM)</label>
+                        <label htmlFor="auto_posting_check" className="text-sm font-bold text-gray-700">Enable 4x Daily Auto-Posting (6 AM, 12 PM, 6 PM, 10 PM)</label>
                       </div>
                       <span className={`text-[10px] font-bold px-2 py-1 rounded-full ${siteSettings.ai_auto_posting === 'enabled' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
                         {siteSettings.ai_auto_posting === 'enabled' ? 'ACTIVE' : 'DISABLED'}
                       </span>
                     </div>
                     <div className="flex gap-4">
-                      <Button type="submit" className="bg-[#f8a4b9]">Save AI Configuration</Button>
+                      <Button type="submit" className="bg-gradient-to-r from-[#f8a4b9] to-[#f47c98] text-white border-0 shadow-sm" title="Save these settings and instantly restart the cron schedule.">Save AI Configuration</Button>
                       <Button 
                         type="button" 
                         variant="outline" 
+                        title="Automatically fixes broken images and standardizes categories across all past blog posts."
                         onClick={async () => {
                           if (confirm('This will attempt to fix broken images (source.unsplash.com & loremflickr) and normalize categories. Proceed?')) {
                             const token = localStorage.getItem('admin_token');
@@ -701,23 +714,23 @@ export default function AdminDashboard() {
                   </form>
                 </div>
 
-                <div className="bg-white rounded-2xl border p-6">
+                <div className="bg-white rounded-2xl border p-6 shadow-sm">
                   <h3 className="font-bold mb-4 flex items-center gap-2">
-                    <Clock className="w-4 h-4 text-gray-400" />
+                    <Clock className="w-4 h-4 text-[#f8a4b9]" />
                     Automation Activity
                   </h3>
                   <div className="space-y-4 max-h-[500px] overflow-y-auto pr-2">
                     {aiLogs.length === 0 && <p className="text-xs text-gray-500 italic">No activity recorded yet.</p>}
                     {aiLogs.map((log: any) => (
-                      <div key={log.id} className="p-3 rounded-lg bg-gray-50 border border-gray-100">
+                      <div key={log.id} className="p-3 rounded-lg bg-gray-50 border border-gray-100 hover:border-gray-200 transition-colors">
                         <div className="flex items-center justify-between mb-1">
                           <span className={`text-[10px] font-bold uppercase px-1.5 py-0.5 rounded ${log.status === 'success' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
                             {log.status}
                           </span>
-                          <span className="text-[10px] text-gray-400">{new Date(log.created_at).toLocaleDateString()}</span>
+                          <span className="text-[10px] text-gray-500 font-medium">{new Date(log.created_at).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}</span>
                         </div>
-                        <p className="text-xs font-bold truncate">{log.action.toUpperCase()}: {log.topic}</p>
-                        <p className="text-[10px] text-gray-500 line-clamp-2 mt-1">{log.message}</p>
+                        <p className="text-xs font-bold truncate text-gray-800 mt-1">{log.action.toUpperCase()}: {log.topic}</p>
+                        <p className="text-[10px] text-gray-500 line-clamp-2 mt-1" title={log.message}>{log.message}</p>
                       </div>
                     ))}
                   </div>

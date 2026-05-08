@@ -388,6 +388,24 @@ app.get("/api/admin/messages", authenticateAdmin, async (req, res) => {
   }
 });
 
+app.put("/api/admin/messages/:id", authenticateAdmin, async (req, res) => {
+  try {
+    await db.messages.update({ _id: req.params.id }, { $set: { status: req.body.status || "read" } });
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error: "Failed to update message" });
+  }
+});
+
+app.delete("/api/admin/messages/:id", authenticateAdmin, async (req, res) => {
+  try {
+    await db.messages.remove({ _id: req.params.id });
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error: "Failed to delete message" });
+  }
+});
+
 app.get("/api/admin/services", authenticateAdmin, async (req, res) => {
   try {
     const services = await db.services.find({}).sort({ created_at: -1 });

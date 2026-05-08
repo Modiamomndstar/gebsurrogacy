@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react'
 import { 
+  Inbox,
+  CheckCircle,
   LayoutDashboard, 
   FileText, 
   Users, 
@@ -97,6 +99,7 @@ export default function AdminDashboard() {
   const [surrogateApps, setSurrogateApps] = useState<any[]>([])
   const [analytics, setAnalytics] = useState<any[]>([])
   const [comments, setComments] = useState<any[]>([])
+  const [contactMessages, setContactMessages] = useState<any[]>([])
   const [isGenerating, setIsGenerating] = useState(false)
   
   const [isBlogModalOpen, setIsBlogModalOpen] = useState(false)
@@ -128,14 +131,15 @@ export default function AdminDashboard() {
 
   const fetchDashboardData = async (token: string, currentUser?: AdminUser) => {
     try {
-      const [summaryRes, consultationsRes, blogRes, testimoniesRes, servicesRes, settingsRes, aiLogsRes] = await Promise.all([
+      const [summaryRes, consultationsRes, blogRes, testimoniesRes, servicesRes, settingsRes, aiLogsRes, messagesRes] = await Promise.all([
         fetch('/api/admin/summary', { headers: { 'Authorization': `Bearer ${token}` } }),
         fetch('/api/consultations?limit=50', { headers: { 'Authorization': `Bearer ${token}` } }),
         fetch('/api/admin/blog-posts', { headers: { 'Authorization': `Bearer ${token}` } }),
         fetch('/api/admin/testimonies', { headers: { 'Authorization': `Bearer ${token}` } }),
         fetch('/api/admin/services', { headers: { 'Authorization': `Bearer ${token}` } }),
         fetch('/api/settings'),
-        fetch('/api/admin/ai/logs', { headers: { 'Authorization': `Bearer ${token}` } })
+        fetch('/api/admin/ai/logs', { headers: { 'Authorization': `Bearer ${token}` } }),
+        fetch('/api/admin/messages', { headers: { 'Authorization': `Bearer ${token}` } })
       ])
 
       if (summaryRes.ok) {
@@ -149,6 +153,7 @@ export default function AdminDashboard() {
       if (servicesRes.ok) setServices((await servicesRes.json()).services || [])
       if (settingsRes.ok) setSiteSettings((await settingsRes.json()).settings || {})
       if (aiLogsRes.ok) setAiLogs((await aiLogsRes.json()).logs || [])
+      if (messagesRes.ok) setContactMessages(await messagesRes.json() || [])
       
       const [subRes, appsRes, commentsRes] = await Promise.all([
         fetch('/api/admin/newsletter', { headers: { 'Authorization': `Bearer ${token}` } }),
@@ -395,6 +400,7 @@ export default function AdminDashboard() {
     { id: 'overview', label: 'Overview', icon: LayoutDashboard },
     { id: 'surrogates', label: 'Surrogate Apps', icon: Baby },
     { id: 'newsletter', label: 'Subscribers', icon: Mail },
+    { id: 'messages', label: 'General Inbox', icon: Inbox },
     { id: 'comments', label: 'Comments', icon: MessageCircle },
     { id: 'consultations', label: 'Consultations', icon: Calendar },
     { id: 'blog', label: 'Blog Posts', icon: FileText },
@@ -982,6 +988,70 @@ export default function AdminDashboard() {
                   ))}
                 </tbody>
               </table>
+            </div>
+          )}
+
+          {activeTab === 'messages' && (
+            <div className="bg-white rounded-2xl border overflow-hidden">
+              <div className="p-6 border-b flex justify-between items-center">
+                <h3 className="font-bold">General Website Messages ({contactMessages.length})</h3>
+                <div className="flex gap-2 text-xs text-gray-400">
+                  <span className="flex items-center gap-1"><div className="w-2 h-2 bg-[#f8a4b9] rounded-full"></div> Unread</span>
+                  <span className="flex items-center gap-1"><div className="w-2 h-2 bg-gray-200 rounded-full"></div> Read</span>
+                </div>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full text-left">
+                  <thead>
+                    <tr className="bg-gray-50 text-xs text-gray-500 uppercase">
+                      <th className="px-6 py-3 w-10"></th>
+                      <th className="px-6 py-3">Sender</th>
+                      <th className="px-6 py-3">Subject & Message</th>
+                      <th className="px-6 py-3">Date</th>
+                      <th className="px-6 py-3 text-right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y">
+                    {contactMessages.length === 0 && (
+                      <tr>
+                        <td colSpan={5} className="py-20 text-center text-gray-400">
+                          <Inbox className="w-12 h-12 mx-auto mb-4 opacity-20" />
+                          <p>No messages in your inbox yet.</p>
+                        </td>
+                      </tr>
+                    )}
+                    {contactMessages.map(m => (
+                      <tr key={m._id} className={`text-sm hover:bg-gray-50/50 transition-colors ${m.status === 'unread' ? 'bg-pink-50/10' : ''}`}>
+                        <td className="px-6 py-4">
+                          {m.status === 'unread' && <div className="w-2 h-2 bg-[#f8a4b9] rounded-full shadow-sm shadow-[#f8a4b9]/50"></div>}
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="font-bold text-gray-900">{m.name}</div>
+                          <div className="text-xs text-gray-500">{m.email}</div>
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="font-bold text-xs text-gray-700 truncate max-w-xs">{m.subject || 'No Subject'}</div>
+                          <div className="text-xs text-gray-500 line-clamp-1 max-w-sm mt-1">{m.message}</div>
+                        </td>
+                        <td className="px-6 py-4 text-xs text-gray-400">
+                          {new Date(m.created_at).toLocaleDateString()}
+                        </td>
+                        <td className="px-6 py-4 text-right flex items-center justify-end gap-1">
+                          <Button variant="ghost" size="sm" title="View Full Message" onClick={() => alert(`From: ${m.name}\nEmail: ${m.email}\nSubject: ${m.subject}\n\nMessage: ${m.message}`)}><Eye className="w-4 h-4" /></Button>
+                          {m.status === 'unread' && (
+                            <Button variant="ghost" size="sm" title="Mark as Read" onClick={async () => {
+                              const token = localStorage.getItem('admin_token');
+                              await fetch(`/api/admin/messages/${m._id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, body: JSON.stringify({ status: 'read' }) });
+                              fetchDashboardData(token!);
+                            }}><CheckCircle className="w-4 h-4 text-green-500" /></Button>
+                          )}
+                          <Button variant="ghost" size="sm" className="text-red-500" onClick={async () => { if(confirm('Delete message?')) { const token = localStorage.getItem('admin_token'); await fetch(`/api/admin/messages/${m._id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } }); fetchDashboardData(token!); } }}><Trash2 className="w-4 h-4" /></Button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
           )}
 

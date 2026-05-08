@@ -123,7 +123,7 @@ class AIEngine {
       // --- Robust JSON Extraction & Cleanup ---
       const cleanAIResponse = (text) => {
         try {
-          // 1. Remove markdown blocks
+          // 1. Remove markdown blocks and trim
           let cleaned = text.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
           
           // 2. Find the first '{' and last '}' to extract the JSON object
@@ -133,16 +133,25 @@ class AIEngine {
           cleaned = cleaned.substring(startIdx, endIdx + 1);
 
           // 3. Handle 'Bad control character' by removing literal newlines/tabs inside strings
-          cleaned = cleaned.replace(/"([^"]*)"/g, (match, group) => {
-            return `"${group.replace(/\n/g, "\\n").replace(/\r/g, "\\r").replace(/\t/g, "\\t")}"`;
+          // This regex correctly skips escaped quotes like \"
+          cleaned = cleaned.replace(/"((?:\\.|[^"])*)"/g, (match, group) => {
+            // Inside the string, we want to escape literal newlines and other control characters
+            return `"${group
+              .replace(/\n/g, "\\n")
+              .replace(/\r/g, "\\r")
+              .replace(/\t/g, "\\t")}"`;
           });
 
           return JSON.parse(cleaned);
         } catch (e) {
           logger.error("JSON Cleanup/Parse Failed", { original: text, error: e.message });
           try {
+             // Fallback: try to find the JSON block and do a slightly more aggressive newline replacement
              const match = text.match(/\{[\s\S]*\}/);
-             if (match) return JSON.parse(match[0].replace(/\n/g, "\\n"));
+             if (match) {
+                 // Try parsing after escaping all newlines that are not between property boundaries (very rough fallback)
+                 return JSON.parse(match[0].replace(/\n(?!(?:[^"]*"[^"]*")*[^"]*$)/g, "\\n"));
+             }
           } catch (inner) {}
           throw new Error(`AI returned invalid JSON: ${e.message}`);
         }

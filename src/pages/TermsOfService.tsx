@@ -70,7 +70,7 @@ const TermsOfService = () => {
             <div className="bg-gray-50 rounded-2xl p-8 border border-gray-100 mt-12">
               <h2 className="text-2xl font-serif font-bold text-gray-900 mb-4">Contact Us</h2>
               <p className="text-gray-600 mb-4">
-                If you have any questions about these Terms, please contact us at gebheritagagency@gmail.com.
+                If you have any questions about these Terms, please contact us at gebsurrogacyservices@gmail.com.
               </p>
               <div className="space-y-2 text-gray-600">
                 <p className="font-bold text-gray-900">GEB Surrogacy Services</p>

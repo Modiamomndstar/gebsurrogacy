@@ -91,7 +91,7 @@ export default function Contact() {
       city: 'Nigeria Office',
       address: siteSettings.nigeria_address || 'Block D5 Flat 36 CBN Estate 2, Satellite Town Lagos Nigeria',
       phone: siteSettings.nigeria_phone || '+2347034270722',
-      email: siteSettings.nigeria_email || 'gebheritagagency@gmail.com'
+      email: siteSettings.nigeria_email || 'gebsurrogacyservices@gmail.com'
     },
     {
       city: 'UK Presence',
@@ -380,7 +380,7 @@ export default function Contact() {
             <a href="https://instagram.com/geb_surrogacy_services" target="_blank" className="flex items-center gap-2 font-bold text-gray-900 hover:text-[#e4405f] transition-colors"><Instagram className="w-6 h-6" /> Instagram</a>
             <a href="https://facebook.com/share/192smxW7GG/" target="_blank" className="flex items-center gap-2 font-bold text-gray-900 hover:text-[#1877f2] transition-colors"><Facebook className="w-6 h-6" /> Facebook</a>
             <a href="https://wa.me/2347034270722" target="_blank" className="flex items-center gap-2 font-bold text-gray-900 hover:text-[#25d366] transition-colors"><MessageCircle className="w-6 h-6" /> WhatsApp</a>
-            <a href="mailto:info@gebsurrogacy.com" className="flex items-center gap-2 font-bold text-gray-900 hover:text-[#f8a4b9] transition-colors"><Mail className="w-6 h-6" /> Email</a>
+            <a href="mailto:gebsurrogacyservices@gmail.com" className="flex items-center gap-2 font-bold text-gray-900 hover:text-[#f8a4b9] transition-colors"><Mail className="w-6 h-6" /> Email</a>
           </div>
         </div>
       </section>

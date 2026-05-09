@@ -197,7 +197,7 @@ const initializeDatabase = async () => {
         consultation_fee: "₦50,000 / $100",
         whatsapp_number: "+2347034270722",
         contact_email: "gebsurrogacyservices@gmail.com",
-        nigeria_email: "gebheritagagency@gmail.com",
+        nigeria_email: "gebsurrogacyservices@gmail.com",
         uk_email: "gebsurrogacyservices@gmail.com",
         usa_email: "surrogacynigeria01@gmail.com",
         contact_phone: "+2347034270722",

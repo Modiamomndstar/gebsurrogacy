@@ -25,7 +25,8 @@ import {
   Globe,
   Mail,
   Baby,
-  LineChart
+  LineChart,
+  Sparkles
 } from 'lucide-react'
 import { 
   Dialog, 

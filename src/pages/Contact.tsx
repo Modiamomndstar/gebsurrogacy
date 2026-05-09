@@ -8,12 +8,8 @@ import {
   Clock,
   Instagram,
   Facebook,
-  Send,
-  ShieldCheck,
-  Headphones,
   MessageCircle,
   Stethoscope,
-  Users2,
   HelpCircle,
   ChevronRight,
   DollarSign
@@ -26,8 +22,8 @@ import SEO from '@/components/SEO'
 
 export default function Contact() {
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [siteSettings, setSiteSettings] = useState<any>({})
   const location = useLocation()
-  const [isConsulting, setIsConsulting] = useState(false)
 
   useEffect(() => {
     fetch('/api/settings')

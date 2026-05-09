@@ -40,7 +40,7 @@ const COMPANY_INFO = {
   founder: 'Blessing Gbudje',
   phone: '+2347034270722',
   whatsapp: '+2347034270722',
-  email: 'gebheritagagency@gmail.com',
+  email: 'gebsurrogacyservices@gmail.com',
   nigeriaAddress: 'Block D5 Flat 36 CBN Estate 2, Satellite Town Lagos Nigeria',
   ukAddress: 'Leeds, UK',
   ukPhone: '+447933193271',
@@ -388,7 +388,7 @@ function Home() {
                 { label: 'Process', ref: processRef, type: 'scroll' },
                 { label: 'Blog', path: '/blog', type: 'link' },
                 { label: 'Become a Surrogate', path: '/become-a-surrogate', type: 'link' },
-                { label: 'Contact', ref: ctaRef, type: 'scroll' }
+                { label: 'Contact', path: '/contact', type: 'link' }
               ].map((item) => (
                 item.type === 'scroll' ? (
                   <button
@@ -449,7 +449,7 @@ function Home() {
                 { label: 'Process', ref: processRef, type: 'scroll' },
                 { label: 'Blog', path: '/blog', type: 'link' },
                 { label: 'Become a Surrogate', path: '/become-a-surrogate', type: 'link' },
-                { label: 'Contact', ref: ctaRef, type: 'scroll' }
+                { label: 'Contact', path: '/contact', type: 'link' }
               ].map((item) => (
                 item.type === 'scroll' ? (
                   <button
@@ -1049,7 +1049,7 @@ function Home() {
                   <li className="flex items-center gap-3">
                     <Mail className="w-5 h-5 text-[#f8a4b9] flex-shrink-0" />
                     <a href={`mailto:${siteSettings.contact_email || COMPANY_INFO.email}`} className="text-gray-400 hover:text-[#f8a4b9] transition-colors text-sm">
-                      {siteSettings.contact_email || COMPANY_INFO.email}
+                      {siteSettings.contact_email || 'gebsurrogacyservices@gmail.com'}
                     </a>
                   </li>
                 </ul>

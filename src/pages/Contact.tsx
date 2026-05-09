@@ -57,9 +57,9 @@ export default function Contact() {
       const endpoint = isConsultation ? '/api/consultations' : '/api/contact'
       const payload = isConsultation ? {
         ...data,
-        first_name: (data.fullName as string).split(' ')[0],
-        last_name: (data.fullName as string).split(' ').slice(1).join(' ') || 'User',
-        preferred_date: new Date().toISOString()
+        first_name: data.firstName,
+        last_name: data.lastName,
+        preferred_date: data.preferredDate || new Date().toISOString()
       } : {
         name: data.fullName,
         email: data.email,
@@ -141,13 +141,13 @@ export default function Contact() {
       <div className="py-12 bg-white/50 border-b border-[#f0e7ec]">
         <div className="container mx-auto px-4 max-w-6xl">
            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              <a href={`mailto:${siteSettings.contact_email || 'info@gebsurrogacy.com'}`} className="flex items-center gap-4 p-6 bg-white rounded-3xl border border-[#f0e7ec] hover:border-[#f8a4b9] transition-all group">
+              <a href={`mailto:${siteSettings.contact_email || 'gebsurrogacyservices@gmail.com'}`} className="flex items-center gap-4 p-6 bg-white rounded-3xl border border-[#f0e7ec] hover:border-[#f8a4b9] transition-all group">
                  <div className="w-12 h-12 rounded-2xl bg-blue-50 flex items-center justify-center group-hover:bg-blue-100 transition-colors">
                     <Mail className="w-6 h-6 text-blue-500" />
                  </div>
                  <div>
                     <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Email Us</p>
-                    <p className="font-bold text-gray-900 truncate">{siteSettings.contact_email || 'info@gebsurrogacy.com'}</p>
+                    <p className="font-bold text-gray-900 truncate">{siteSettings.contact_email || 'gebsurrogacyservices@gmail.com'}</p>
                  </div>
               </a>
               <a href={`https://wa.me/${siteSettings.whatsapp_number || '2347034270722'}`} target="_blank" className="flex items-center gap-4 p-6 bg-white rounded-3xl border border-[#f0e7ec] hover:border-[#25d366] transition-all group">
@@ -257,12 +257,12 @@ export default function Contact() {
                 <form id="consultation-form" onSubmit={handleSubmit} className="space-y-6">
                    <div className="grid sm:grid-cols-2 gap-6">
                     <div className="space-y-2">
-                      <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Full Name</label>
-                      <Input name="fullName" placeholder="John Doe" required className="bg-gray-50 border-none rounded-2xl h-14 px-6 focus:ring-2 focus:ring-[#f8a4b9]/20" />
+                      <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">First Name</label>
+                      <Input name="firstName" placeholder="John" required className="bg-gray-50 border-none rounded-2xl h-14 px-6 focus:ring-2 focus:ring-[#f8a4b9]/20" />
                     </div>
                     <div className="space-y-2">
-                      <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Location</label>
-                      <Input name="location" placeholder="City, Country" required className="bg-gray-50 border-none rounded-2xl h-14 px-6 focus:ring-2 focus:ring-[#f8a4b9]/20" />
+                      <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Last Name</label>
+                      <Input name="lastName" placeholder="Doe" required className="bg-gray-50 border-none rounded-2xl h-14 px-6 focus:ring-2 focus:ring-[#f8a4b9]/20" />
                     </div>
                   </div>
                   <div className="grid sm:grid-cols-2 gap-6">
@@ -273,6 +273,16 @@ export default function Contact() {
                     <div className="space-y-2">
                       <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Phone Number</label>
                       <Input name="phone" type="tel" placeholder="+..." required className="bg-gray-50 border-none rounded-2xl h-14 px-6 focus:ring-2 focus:ring-[#f8a4b9]/20" />
+                    </div>
+                  </div>
+                  <div className="grid sm:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Location</label>
+                      <Input name="location" placeholder="City, Country" required className="bg-gray-50 border-none rounded-2xl h-14 px-6 focus:ring-2 focus:ring-[#f8a4b9]/20" />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Preferred Date</label>
+                      <Input name="preferredDate" type="date" required className="bg-gray-50 border-none rounded-2xl h-14 px-6 focus:ring-2 focus:ring-[#f8a4b9]/20" />
                     </div>
                   </div>
                   <div className="space-y-2">

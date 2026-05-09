@@ -317,8 +317,8 @@ export default function AdminDashboard() {
     })
     
     // Explicitly handle checkboxes that might be missing if unchecked
-    settings.ai_auto_posting = formData.get('ai_auto_posting') === 'on' ? 'enabled' : 'disabled';
-    settings.social_auto_post = formData.get('social_auto_post') === 'on' ? 'enabled' : 'disabled';
+    settings.ai_autopost = formData.get('ai_autopost') === 'on';
+    settings.social_auto_post = siteSettings.social_auto_post; // Maintain this from state if not in form
 
     const token = localStorage.getItem('admin_token')
     try {
@@ -1107,6 +1107,32 @@ export default function AdminDashboard() {
                       <span className="text-[10px] bg-blue-50 text-blue-500 px-2 py-0.5 rounded-full font-bold">Format: ca-pub-xxxxxxxxxxxxxxxx</span>
                     </label>
                     <Input name="adsense_client_id" defaultValue={siteSettings.adsense_client_id} placeholder="ca-pub-..." />
+                  </div>
+                </div>
+
+                {/* AI & Automation Settings */}
+                <div className="bg-purple-50/50 rounded-2xl p-8 border border-purple-100/50 space-y-6">
+                  <h3 className="font-bold text-lg flex items-center gap-2 text-purple-700">
+                    <Sparkles className="w-5 h-5" /> AI Blog Automation
+                  </h3>
+                  <div className="flex items-center justify-between bg-white p-4 rounded-xl border border-purple-100">
+                    <div>
+                      <p className="font-bold text-sm">Automated Blog Posting</p>
+                      <p className="text-xs text-gray-500">Automatically generate and publish posts 4 times daily (6AM, 12PM, 6PM, 10PM).</p>
+                    </div>
+                    <label className="relative inline-flex items-center cursor-pointer">
+                      <input 
+                        type="checkbox" 
+                        name="ai_autopost"
+                        defaultChecked={siteSettings.ai_autopost} 
+                        className="sr-only peer" 
+                      />
+                      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-purple-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600"></div>
+                    </label>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold text-gray-400 uppercase">Custom AI Topics (Comma separated)</label>
+                    <Input name="ai_topics" defaultValue={siteSettings.ai_topics} placeholder="Benefits of Surrogacy, IVF Trends, Legal Advice..." />
                   </div>
                 </div>
                 <div className="grid grid-cols-1 gap-6">

@@ -208,7 +208,7 @@ const initializeDatabase = async () => {
         uk_address: "Leeds, UK",
         usa_address: "California, USA",
         ai_provider: "gemini",
-        ai_auto_posting: "enabled",
+        ai_autopost: true,
         site_name: "GEB Surrogacy Services"
       });
       logger.info("Default settings initialized with official contact info");

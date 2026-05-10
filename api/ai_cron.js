@@ -122,38 +122,63 @@ class AIEngine {
 
       // --- Robust JSON Extraction & Cleanup ---
       const cleanAIResponse = (text) => {
+        // 1. Initial Cleanup: Remove markdown code blocks and extract { ... }
+        let cleaned = text.replace(/```json/gi, '').replace(/```/g, '').trim();
+        const startIdx = cleaned.indexOf('{');
+        const endIdx = cleaned.lastIndexOf('}');
+        if (startIdx !== -1 && endIdx !== -1) {
+            cleaned = cleaned.substring(startIdx, endIdx + 1);
+        }
+
         try {
-          // 1. Remove markdown code blocks if present
-          let cleaned = text.replace(/```json/gi, '').replace(/```/g, '').trim();
-
-          // 2. Extract first { to last }
-          const startIdx = cleaned.indexOf('{');
-          const endIdx = cleaned.lastIndexOf('}');
-          if (startIdx === -1 || endIdx === -1) throw new Error("No JSON object found in AI response");
-          cleaned = cleaned.substring(startIdx, endIdx + 1);
-
-          // 3. Aggressive Cleanup of common AI JSON mistakes
-          // Replace literal newlines inside what appears to be a string value
-          // This regex finds content between quotes and escapes newlines
-          cleaned = cleaned.replace(/:[ \t]*"([\s\S]*?)"(?=[ \t\n]*[,}])/g, (match, content) => {
-            const escapedContent = content
-              .replace(/\n/g, "\\n")
-              .replace(/\r/g, "\\r")
-              .replace(/\t/g, "\\t");
-            return `: "${escapedContent}"`;
-          });
-
+          // Attempt standard parse first
           return JSON.parse(cleaned);
         } catch (e) {
-          logger.error("JSON Cleanup/Parse Failed", { original: text, error: e.message });
-          // Extreme Fallback: Remove all non-essential characters between properties
+          logger.warn("Standard JSON.parse failed, attempting robust extraction...", { error: e.message });
+          
+          // 2. Field-by-Field Robust Extraction (Fallback)
+          const fields = ["title", "excerpt", "content", "category", "image_keywords"];
+          const result = {};
+          let successCount = 0;
+
+          fields.forEach(field => {
+            // Find "field": "value"
+            // This regex looks for the field name followed by a quote, captures until the next field pattern or end of JSON
+            const regex = new RegExp(`"${field}"\\s*:\\s*"([\\s\\S]*?)"(?=\\s*,?\\s*\\n?\\s*"(?:${fields.join('|')})"\\s*:|\\s*\\n?\\s*})`, 'i');
+            const match = cleaned.match(regex);
+            if (match) {
+              result[field] = match[1]
+                .replace(/\\n/g, "\n")
+                .replace(/\\r/g, "\r")
+                .replace(/\\t/g, "\t")
+                .replace(/\\"/g, '"') // Unescape if AI did escape
+                .trim();
+              successCount++;
+            }
+          });
+
+          // Validation: We need at least title and content
+          if (result.title && result.content) {
+            logger.info("Robust extraction succeeded for core fields", { fields: Object.keys(result) });
+            return result;
+          }
+
+          // 3. Final Aggressive Fix attempt
           try {
-             let extreme = text.substring(text.indexOf('{'), text.lastIndexOf('}') + 1);
-             // Attempt to fix common "Expected , or }" error by ensuring commas between properties
-             extreme = extreme.replace(/"\s*\n\s*"/g, '",\n"'); 
-             return JSON.parse(extreme);
-          } catch (inner) {}
-          throw new Error(`AI returned invalid JSON: ${e.message}`);
+            let fixed = cleaned
+                .replace(/\n/g, "\\n") // Escape literal newlines
+                .replace(/\\n(?=(?:[^"]*"[^"]*")*[^"]*$)/g, "\n"); // Unescape newlines NOT between quotes (rough)
+            
+            // This regex tries to fix unescaped quotes inside values by looking for "property": "value"
+            fixed = fixed.replace(/:[ \t]*"([\s\S]*?)"(?=[ \t\n]*[,}])/g, (m, content) => {
+                const safe = content.replace(/"/g, '\\"');
+                return `: "${safe}"`;
+            });
+            return JSON.parse(fixed);
+          } catch (inner) {
+            logger.error("All JSON recovery attempts failed", { original: text });
+            throw new Error(`AI returned invalid JSON and recovery failed: ${e.message}`);
+          }
         }
       };
 

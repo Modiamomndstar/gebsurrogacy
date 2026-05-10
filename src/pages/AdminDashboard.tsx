@@ -318,8 +318,21 @@ export default function AdminDashboard() {
     })
     
     // Explicitly handle checkboxes that might be missing if unchecked
-    settings.ai_autopost = formData.get('ai_autopost') === 'on';
-    settings.social_auto_post = siteSettings.social_auto_post; // Maintain this from state if not in form
+    // We check if the form element exists in the DOM inside the submitted form
+    const form = e.currentTarget as HTMLFormElement;
+    
+    if (form.querySelector('input[name="ai_autopost"]')) {
+      settings.ai_autopost = formData.get('ai_autopost') === 'on';
+    }
+    
+    if (form.querySelector('input[name="social_auto_post"]')) {
+      settings.social_auto_post = formData.get('social_auto_post') === 'on' ? 'enabled' : 'disabled';
+    }
+    
+    // Cleanup old field if present
+    if (formData.has('ai_auto_posting')) {
+      settings.ai_autopost = formData.get('ai_auto_posting') === 'on' || formData.get('ai_auto_posting') === 'enabled';
+    }
 
     const token = localStorage.getItem('admin_token')
     try {
@@ -657,14 +670,14 @@ export default function AdminDashboard() {
                         <input 
                           type="checkbox" 
                           id="auto_posting_check"
-                          name="ai_auto_posting" 
-                          defaultChecked={siteSettings.ai_auto_posting === 'enabled'} 
+                          name="ai_autopost" 
+                          defaultChecked={siteSettings.ai_autopost} 
                           className="w-5 h-5 accent-[#f8a4b9]"
                         />
                         <label htmlFor="auto_posting_check" className="text-sm font-bold text-gray-700">Enable 4x Daily Auto-Posting (6 AM, 12 PM, 6 PM, 10 PM)</label>
                       </div>
-                      <span className={`text-[10px] font-bold px-2 py-1 rounded-full ${siteSettings.ai_auto_posting === 'enabled' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
-                        {siteSettings.ai_auto_posting === 'enabled' ? 'ACTIVE' : 'DISABLED'}
+                      <span className={`text-[10px] font-bold px-2 py-1 rounded-full ${siteSettings.ai_autopost ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
+                        {siteSettings.ai_autopost ? 'ACTIVE' : 'DISABLED'}
                       </span>
                     </div>
                     <div className="flex gap-4">

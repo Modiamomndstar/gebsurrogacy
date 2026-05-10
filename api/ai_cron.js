@@ -223,7 +223,7 @@ class AIEngine {
 
   async startCron() {
     const settings = await this.db.settings.findOne({});
-    const isEnabled = settings?.ai_auto_posting === 'enabled';
+    const isEnabled = settings?.ai_autopost === true;
     
     if (this.activeJobs && this.activeJobs.length > 0) {
       this.activeJobs.forEach(job => job.stop());

@@ -4,6 +4,7 @@ const Groq = require("groq-sdk");
 
 const logger = {
   info: (msg, data = {}) => console.log(`[AI INFO] ${new Date().toISOString()} - ${msg}`, data),
+  warn: (msg, data = {}) => console.warn(`[AI WARN] ${new Date().toISOString()} - ${msg}`, data),
   error: (msg, error = {}) => console.error(`[AI ERROR] ${new Date().toISOString()} - ${msg}`, error),
 };
 
